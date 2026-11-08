@@ -413,9 +413,16 @@ const ENTDATA = [
 ];
 const ent = name => ENTDATA.find(e=>e.name===name);
 const ini = n => n.split(/\s+/).map(w=>w[0]).join('').slice(0,2).toUpperCase();
+/* Libellés de l'annuaire vu par les adhérents et les sympathisants : appartenance Cfdt précisée. */
+const CFDT = {
+  DS:{g:'Délégué syndical Cfdt (DS)', r:'Délégué syndical Cfdt'},
+  RS:{g:'Représentant syndical Cfdt (RS)', r:'Représentant syndical Cfdt au CSE'},
+  CT:{g:'Élus Cfdt au CSE', r:'Élu Cfdt au CSE, titulaire'},
+  CS:{g:'Élus Cfdt au CSE', r:'Élu Cfdt au CSE, suppléant'}
+};
 function delegs(name){
   return ent(name).m.slice().sort((a,b)=>ROLES[a.role].o-ROLES[b.role].o)
-    .map(x=>({g:ROLES[x.role].g, ini:x.role, n:x.n, r:ROLES[x.role].r, tel:x.tel}));
+    .map(x=>({g:CFDT[x.role].g, ini:x.role, n:x.n, r:CFDT[x.role].r, tel:x.tel}));
 }
 const gP = e => e.m.find(x=>x.gest==='P'), gS = e => e.m.find(x=>x.gest==='S');
 const govCount = e => (gP(e)?1:0) + (gS(e)?1:0);
@@ -1051,7 +1058,7 @@ const h0 = location.hash.slice(1); if(h0 && SCREENS[h0]) go(h0, true); else rend
 
 <script>
 (function(){
-  var CODE = "NAO2026", KEY = 'secam-demo-ok', BUILD = "08/11 13h13";
+  var CODE = "NAO2026", KEY = 'secam-demo-ok', BUILD = "08/11 13h23";
   var gate = document.getElementById('gate'), form = document.getElementById('gateForm'),
       input = document.getElementById('gateCode'), err = document.getElementById('gateErr');
   function ok(){ try { return localStorage.getItem(KEY) === CODE; } catch(e){ return false; } }
