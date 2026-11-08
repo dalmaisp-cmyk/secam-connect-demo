@@ -272,10 +272,11 @@ button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{ou
 
 /* ---------- Mode appli (démo installable) ---------- */
 html,body{height:100%}
-body{margin:0;padding:0!important;background:#F5F3F0;overscroll-behavior:none;-webkit-text-size-adjust:100%}
+body{margin:0;padding:0!important;background:#FFFFFF;overscroll-behavior:none;-webkit-text-size-adjust:100%}
 .wrap{display:block;max-width:none;margin:0;height:100%}
 .stage{position:static;display:block;height:100%}
-.device{width:100%;max-width:520px;height:100%;margin:0 auto;border-radius:0;padding:0;background:none;box-shadow:none}
+.device{position:fixed;top:0;bottom:0;left:0;right:0;width:auto;max-width:520px;height:auto;margin:0 auto;border-radius:0;padding:0;background:none;box-shadow:none}
+@supports (height:100dvh){.device{height:100dvh;bottom:auto}}
 .phone{border-radius:0!important}
 .hd{padding-top:calc(16px + env(safe-area-inset-top,0px))}
 .scr > header.hd[style]{padding-top:calc(22px + env(safe-area-inset-top,0px))!important}
