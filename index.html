@@ -951,9 +951,12 @@ function render(keepScroll){
   try {
     const top = phone.querySelector('.hd, .story');
     const col = getComputedStyle(top || phone).backgroundColor;
-    let meta = document.querySelector('meta[name="theme-color"]');
-    if(!meta){ meta = document.createElement('meta'); meta.name = 'theme-color'; document.head.appendChild(meta); }
-    if(meta.content !== col) meta.content = col;
+    const old = document.querySelector('meta[name="theme-color"]');
+    if(!old || old.content !== col){
+      /* Certains navigateurs (iOS) ne relisent la couleur que si la balise est remplacée. */
+      const meta = document.createElement('meta'); meta.name = 'theme-color'; meta.content = col;
+      if(old) old.remove(); document.head.appendChild(meta);
+    }
   } catch(e){}
 }
 
@@ -1106,7 +1109,7 @@ const h0 = location.hash.slice(1); if(h0 && SCREENS[h0]) go(h0, true); else rend
 
 <script>
 (function(){
-  var CODE = "NAO2026", KEY = 'secam-demo-ok', BUILD = "08/11 13h37";
+  var CODE = "NAO2026", KEY = 'secam-demo-ok', BUILD = "08/11 13h41";
   var gate = document.getElementById('gate'), form = document.getElementById('gateForm'),
       input = document.getElementById('gateCode'), err = document.getElementById('gateErr');
   function ok(){ try { return localStorage.getItem(KEY) === CODE; } catch(e){ return false; } }
