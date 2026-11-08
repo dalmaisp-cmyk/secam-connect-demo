@@ -390,7 +390,7 @@ const entOpts = () => ENTDATA.filter(e=>!e.arch).map(e=>e.name).map(e=>`<option 
 const TRESO = 'tresorerie@secam-exemple.fr';
 const ME = {prenom:'Claire', nom:'Martin', depuis:'2019'};
 const COLLEGES = {E:'Ouvriers et employés', T:'Techniciens et agents de maîtrise', C:'Ingénieurs et cadres'};
-const SHORT = {E:'Employés', T:'TAM', C:'Cadres'};
+const SHORT = {E:'Employés', T:'TAM', C:'Cadres', N:'Collège non renseigné'};
 const ROLES = {
   DS:{g:'Délégué syndical (DS)', r:'Délégué syndical', o:0},
   RS:{g:'Représentant syndical (RS)', r:'Représentant syndical au CSE', o:1},
@@ -436,6 +436,11 @@ const AGENDA = [
   {d:'26',m:'nov.',cat:'Négociation · télétravail',t:'Accord télétravail : troisième réunion',w:'Direction · 14 h'},
   {d:'01',m:'déc.',cat:'CSSCT',t:'Réunion de la CSSCT (santé, sécurité et conditions de travail)',w:'Salle du CSE · 10 h'}
 ];
+/* Compteur des adhérents par collège (chiffres fictifs, base de 142). Les nouveaux validés arrivent en « Non renseigné ». */
+const collCount = () => ({E:48, T:58, C:27, N:9 + Math.max(0, S.nAdh - 142)});
+/* Sympathisants par collège : base fictive de 38 (dont les 5 de l'exemple), plus les nouveaux inscrits. */
+const symCount = () => { const c={E:17, T:12, C:6, N:3}; S.syms.slice(0, Math.max(0, S.syms.length-5)).forEach(x=>{ c[x.c]=(c[x.c]||0)+1; }); return c; };
+const symTotal = () => S.syms.length + 33;
 const POLL = {q:'Quelle doit être la priorité des prochaines NAO ?', opts:['Salaires','Conditions de travail','Temps de travail'],
   adh:{pct:[58,27,15], votes:96, total:142}, sym:{pct:[44,38,18], votes:16, total:38}};
 
@@ -743,14 +748,22 @@ pilotage:{n:13,g:'pil',l:'Tableau de bord',r(){
     <div class="stats">
       <button class="stat" data-go="adherents"><b>${S.nAdh}</b><span>adhérents</span><em>Voir la liste ›</em></button>
       <button class="stat ${S.pending.length?'hot':''}" data-go="traiter"><b>${S.pending.length}</b><span>demandes d’accès à valider</span></button>
-      <button class="stat" data-go="sympathisants"><b>${S.syms.length+33}</b><span>sympathisants</span><em>Voir la liste ›</em></button>
+      <button class="stat" data-go="sympathisants"><b>${symTotal()}</b><span>sympathisants</span><em>Voir la liste ›</em></button>
     </div>
     <div class="card"><div style="display:flex;justify-content:space-between;align-items:center"><b>Sondage en cours</b><span class="live">EN DIRECT</span></div>
       <div class="tiny">Priorité pour les NAO · vote anonyme · % des votants de chaque public</div>
       <div class="legend" style="margin:8px 0"><div><span class="sq" style="background:var(--btn)"></span>Adhérents<br><b>${Math.round((POLL.adh.votes+(S.adhEver?1:0))/S.nAdh*100)} %</b> · ${POLL.adh.votes+(S.adhEver?1:0)}/${S.nAdh}</div><div><span class="sq" style="background:var(--o)"></span>Sympathisants<br><b>${Math.round((POLL.sym.votes+(S.symEver?1:0))/38*100)} %</b> · ${POLL.sym.votes+(S.symEver?1:0)}/38</div></div>
       <div class="res">${POLL.opts.map((o,i)=>`<div><div class="l"><b>${o}</b><span>${POLL.adh.pct[i]} % · ${POLL.sym.pct[i]} %</span></div><div class="bar ink"><i style="width:${POLL.adh.pct[i]}%"></i></div><div class="bar" style="margin-top:3px"><i style="width:${POLL.sym.pct[i]}%"></i></div></div>`).join('')}</div></div>
-    <div class="card"><b>Adhérents par collège</b> <span class="tiny">sur ${S.nAdh} · chiffres fictifs</span>
-      <div class="res">${[['Ouvriers et employés',34],['Techniciens et agents de maîtrise',41],['Ingénieurs et cadres',19],['Non renseigné',6]].map(([l,v])=>`<div><div class="l"><span>${l}</span><b>${v} %</b></div><div class="bar ink"><i style="width:${v}%"></i></div></div>`).join('')}</div></div>`,
+    ${(()=>{ const c=collCount(), rows=[['E','Ouvriers et employés'],['T','Techniciens et agents de maîtrise'],['C','Ingénieurs et cadres'],['N','Non renseigné']];
+      return `<div class="card"><div style="display:flex;justify-content:space-between;align-items:baseline"><b>Adhérents par collège</b><span class="tiny">chiffres fictifs</span></div>
+      <div class="stats" style="grid-template-columns:repeat(4,1fr);margin-top:8px">${rows.map(([k,l])=>`<button class="stat" data-act="collGo" data-k="${k==='N'?'all':k}" style="padding:8px"><b style="font-size:1.25em">${c[k]}</b><span>${k==='E'?'Employés':k==='T'?'TAM':k==='C'?'Cadres':'Non renseigné'}</span></button>`).join('')}</div>
+      <div class="res">${rows.map(([k,l])=>{ const v=Math.round(c[k]/S.nAdh*100); return `<div><div class="l"><span>${l}</span><b>${c[k]} · ${v} %</b></div><div class="bar ink"><i style="width:${v}%"></i></div></div>`; }).join('')}</div>
+      <div class="l small" style="display:flex;justify-content:space-between;margin-top:8px;border-top:1px solid var(--bd);padding-top:6px"><span>Total</span><b>${S.nAdh} adhérents</b></div></div>`; })()}
+    ${(()=>{ const c=symCount(), tot=symTotal(), rows=[['E','Ouvriers et employés'],['T','Techniciens et agents de maîtrise'],['C','Ingénieurs et cadres'],['N','Non renseigné']];
+      return `<div class="card"><div style="display:flex;justify-content:space-between;align-items:baseline"><b>Sympathisants par collège</b><span class="tiny">chiffres fictifs</span></div>
+      <div class="stats" style="grid-template-columns:repeat(4,1fr);margin-top:8px">${rows.map(([k])=>`<button class="stat" data-act="symCollGo" data-k="${k==='N'?'all':k}" style="padding:8px"><b style="font-size:1.25em">${c[k]}</b><span>${k==='E'?'Employés':k==='T'?'TAM':k==='C'?'Cadres':'Non renseigné'}</span></button>`).join('')}</div>
+      <div class="res">${rows.map(([k,l])=>{ const v=Math.round(c[k]/tot*100); return `<div><div class="l"><span>${l}</span><b>${c[k]} · ${v} %</b></div><div class="bar"><i style="width:${v}%"></i></div></div>`; }).join('')}</div>
+      <div class="l small" style="display:flex;justify-content:space-between;margin-top:8px;border-top:1px solid var(--bd);padding-top:6px"><span>Total</span><b>${tot} sympathisants</b></div></div>`; })()}`,
     tabs('pil','pilotage'));
 }},
 adherents:{n:14,g:'pil',l:'Adhérents',r(){
@@ -759,7 +772,7 @@ adherents:{n:14,g:'pil',l:'Adhérents',r(){
   return page(head({v:'ink',eb:'Espace pilotage DS / RS',t:`Adhérents · ${S.nAdh}`,back:'pilotage'}), `
     <div class="alert">${I.lock}<div>Liste confidentielle, visible uniquement par le DS et le RS de ${ENT}.</div></div>
     <div class="search">${I.search}<input class="inp" id="q" placeholder="Rechercher un adhérent" value="${esc(S.q)}" aria-label="Rechercher un adhérent"></div>
-    <div class="chips">${[['all','Tous'],['E','Employés'],['T','TAM'],['C','Cadres']].map(([k,l])=>`<button class="chip o" data-act="filt" data-k="${k}" aria-pressed="${S.f===k}">${l}</button>`).join('')}</div>
+    <div class="chips">${(()=>{ const c=collCount(); return [['all','Tous',S.nAdh],['E','Employés',c.E],['T','TAM',c.T],['C','Cadres',c.C]].map(([k,l,n])=>`<button class="chip o" data-act="filt" data-k="${k}" aria-pressed="${S.f===k}">${l} · ${n}</button>`).join(''); })()}</div>
     <div class="card flush">${list.length?list.map(m=>`<div class="mrow ${m.r?'restricted':''}"><button class="who" data-act="fiche" data-id="${m.id}"><b>${m.n.toUpperCase()} ${m.p} ›</b> <span class="tag">${SHORT[m.c]}</span>
       <div>${m.tel} · ${m.p.toLowerCase()}.${m.n.toLowerCase()}@exemple.fr</div>${m.r?'<div class="r">Accès restreint</div>':''}</button>
       <button class="btn ${m.r?'dark':'ghost'} sm" data-act="restrict" data-id="${m.id}">${m.r?'Rétablir':'Restreindre'}</button></div>`).join(''):'<p class="muted" style="padding:12px;margin:0">Aucun adhérent ne correspond à cette recherche.</p>'}</div>
@@ -784,10 +797,10 @@ fiche:{n:15,g:'pil',l:'Fiche adhérent',r(){
 sympathisants:{n:16,g:'pil',l:'Sympathisants',r(){
   const q=S.sq.trim().toLowerCase();
   const list=S.syms.filter(m=>(S.sf==='all'||m.c===S.sf)&&(!q||(m.p+' '+m.n).toLowerCase().includes(q)));
-  return page(head({v:'ink',eb:'Espace pilotage DS / RS',t:`Sympathisants · ${S.syms.length+33}`,back:'pilotage'}), `
+  return page(head({v:'ink',eb:'Espace pilotage DS / RS',t:`Sympathisants · ${symTotal()}`,back:'pilotage'}), `
     <div class="alert">${I.lock}<div>Inscrits via l’application, avec leur accord. Visible uniquement par le DS et le RS.</div></div>
     <div class="search">${I.search}<input class="inp" id="sq" placeholder="Rechercher un sympathisant" value="${esc(S.sq)}" aria-label="Rechercher un sympathisant"></div>
-    <div class="chips">${[['all','Tous'],['E','Employés'],['T','TAM'],['C','Cadres']].map(([k,l])=>`<button class="chip o" data-act="sfilt" data-k="${k}" aria-pressed="${S.sf===k}">${l}</button>`).join('')}</div>
+    <div class="chips">${(()=>{ const c=symCount(); return [['all','Tous',symTotal()],['E','Employés',c.E],['T','TAM',c.T],['C','Cadres',c.C]]; })().map(([k,l,n])=>`<button class="chip o" data-act="sfilt" data-k="${k}" aria-pressed="${S.sf===k}">${l} · ${n}</button>`).join('')}</div>
     <div class="card flush">${list.map(m=>`<div class="person"><div class="who"><b>${m.n.toUpperCase()} ${m.p}</b> <span class="tag">${SHORT[m.c]}</span><br><span>${m.tel} · inscrit ${m.w}</span></div>
       <button class="icon-btn" data-act="call" data-n="${m.p} ${m.n}" data-tel="${m.tel}" aria-label="Appeler">${I.phone}</button><button class="icon-btn" data-act="sms" data-n="${m.p} ${m.n}" data-tel="${m.tel}" aria-label="SMS">${I.sms}</button></div>`).join('')||'<p class="muted" style="padding:12px;margin:0">Aucun résultat.</p>'}</div>
     <p class="tiny">Un appel ou un SMS pour les inviter à une réunion ou à adhérer. Données fictives.</p>`, tabs('pil','pilotage'));
@@ -951,6 +964,8 @@ const ACT = {
   rub(el){ const k=el.dataset.k; S.rub[k]=!S.rub[k]; render(true); },
   resend(){ S.code=''; S.codeErr=false; toast('Un nouveau code a été envoyé par SMS.'); },
   'restore-me'(){ me().r=false; go('accueil'); },
+  symCollGo(el){ S.sf=el.dataset.k; go('sympathisants'); },
+  collGo(el){ S.f=el.dataset.k; go('adherents'); },
   filt(el){ S.f=el.dataset.k; render(true); },
   sfilt(el){ S.sf=el.dataset.k; render(true); },
   fiche(el){ S.fiche=+el.dataset.id; go('fiche'); },
@@ -982,7 +997,7 @@ const ACT = {
   telCancel(){ S.telEdit=false; render(true); },
   decide(el){ const p=S.pending.splice(+el.dataset.i,1)[0], ok=el.dataset.d==='ok', who=`${p.p} ${p.n}`;
     if(ok){ S.nAdh++; logIt(`${ENT} : ${who} validé comme adhérent`); if(p.me){ S.status='adh'; S.via='ds'; } }
-    else { S.syms.unshift({p:p.p,n:p.n,c:'E',tel:p.tel,w:'à l\u2019instant'}); logIt(`${ENT} : demande d\u2019accès adhérent de ${who} refusée (reste sympathisant)`); if(p.me) S.status='sym'; }
+    else { S.syms.unshift({p:p.p,n:p.n,c:'N',tel:p.tel,w:'à l\u2019instant'}); logIt(`${ENT} : demande d\u2019accès adhérent de ${who} refusée (reste sympathisant)`); if(p.me) S.status='sym'; }
     toast(ok?`${who} est validé comme adhérent. Une notification lui est envoyée.`:`${who} reste sympathisant.`); },
   validate(el){ const p=S.pending.splice(+el.dataset.i,1)[0]; S.nAdh++; toast(`Accès de ${p.p} ${p.n} validé. Une notification lui est envoyée.`); },
   pub(el){ S.pub=el.dataset.k; render(true); },
@@ -1016,7 +1031,7 @@ phone.addEventListener('submit', e => { e.preventDefault();
     if(!S.consent) return;
     if(!v('ln')||!v('lp')||v('ltel').replace(/\D/g,'').length<10){ toast('Indiquez votre nom, votre prénom et un numéro de portable à 10 chiffres.'); return; }
     S.reg={n:v('ln'),p:v('lp'),tel:v('ltel'),mail:v('lmail')}; ME.nom=S.reg.n; ME.prenom=S.reg.p; go('statut'); }
-  if(e.target.id==='codeform'){ if(S.code.replace(/\D/g,'')==='482917'){ S.codeErr=false; if(S.flow==='retour'){ S.flow=null; if(S.retourAdh){ S.status='adh'; S.via='retour'; S.unlock=null; go('bienvenue'); } else { S.status='sym'; go('sym-actu'); } return; } S.status='sym'; S.syms.unshift({p:S.reg.p,n:S.reg.n,c:'E',tel:S.reg.tel,w:'à l\u2019instant'}); go('sym-actu'); } else { S.codeErr=true; render(true); } }
+  if(e.target.id==='codeform'){ if(S.code.replace(/\D/g,'')==='482917'){ S.codeErr=false; if(S.flow==='retour'){ S.flow=null; if(S.retourAdh){ S.status='adh'; S.via='retour'; S.unlock=null; go('bienvenue'); } else { S.status='sym'; go('sym-actu'); } return; } S.status='sym'; S.syms.unshift({p:S.reg.p,n:S.reg.n,c:'N',tel:S.reg.tel,w:'à l\u2019instant'}); go('sym-actu'); } else { S.codeErr=true; render(true); } }
   if(e.target.id==='mform'){ const v=id=>document.getElementById(id).value.trim(); const e2=ent(S.adm.ent);
     const x={role:v('mr'),n:v('mn'),tel:v('mt'),fin:v('mf')||'2030-06'};
     if(!x.n){ toast('Indiquez le prénom et le nom.'); return; }
@@ -1059,7 +1074,7 @@ const h0 = location.hash.slice(1); if(h0 && SCREENS[h0]) go(h0, true); else rend
 
 <script>
 (function(){
-  var CODE = "NAO2026", KEY = 'secam-demo-ok', BUILD = "08/11 13h28";
+  var CODE = "NAO2026", KEY = 'secam-demo-ok', BUILD = "08/11 13h31";
   var gate = document.getElementById('gate'), form = document.getElementById('gateForm'),
       input = document.getElementById('gateCode'), err = document.getElementById('gateErr');
   function ok(){ try { return localStorage.getItem(KEY) === CODE; } catch(e){ return false; } }
