@@ -468,7 +468,7 @@ const S = {
     {p:'Chloé',n:'Lambert',c:'C',tel:'06 00 00 00 24',w:'il y a 1 mois'},
     {p:'Paul',n:'Vidal',c:'T',tel:'06 00 00 00 25',w:'il y a 2 mois'}
   ],
-  code:'', codeErr:false, telEdit:false, loginErr:false, admins:[{n:'Martine Roux', d:'12 septembre 2026'}], adm:{addAdmin:false, ent:'Entreprise A', edit:null, add:false, addEnt:false, del:null, arch:false},
+  code:'', codeErr:false, symColl:null, symNew:false, telEdit:false, loginErr:false, admins:[{n:'Martine Roux', d:'12 septembre 2026'}], adm:{addAdmin:false, ent:'Entreprise A', edit:null, add:false, addEnt:false, del:null, arch:false},
   log:[{d:'02/11',who:'Admin SECAM',what:'Entreprise B : Damien Faure nommé représentant syndical (RS)'},{d:'15/10',who:'Admin SECAM',what:'Entreprise C : entreprise ajoutée'},{d:'03/10',who:'Admin SECAM',what:'Entreprise A : fin de mandat de Lucas Fabre mise à jour (juin 2028)'}], q:'', f:'all', sq:'', sf:'all', fiche:2, confirm:false,
   pub:'sondage', aud:'deux',
   pubs:[{k:'Story',t:'Point d’étape NAO',v:81},{k:'Actualité',t:'Compte rendu CSE',v:48},{k:'Sondage',t:'Priorité NAO',v:63}],
@@ -495,7 +495,7 @@ function head(o){
 }
 const TABS = {
   adh:[['accueil','Accueil',I.home],['agenda','Agenda',I.cal],['delegues','Délégués',I.users],['compte','Mon compte',I.user]],
-  sym:[['sym-actu','Actualités',I.news],['sym-sondages','Sondages',I.poll],['sym-delegues','Délégués',I.users]],
+  sym:[['sym-actu','Actualités',I.news],['sym-sondages','Sondages',I.poll],['sym-delegues','Délégués',I.users],['sym-compte','Mon compte',I.user]],
   adm:[['admin','Entreprises',I.users],['admin-admins','Administrateurs',I.shield],['admin-journal','Journal',I.news]],
   pil:[['pilotage','Pilotage',I.gauge],['publier','Publier',I.pen],['traiter','À traiter',I.inbox],['adherents','Adhérents',I.users],['annuaire','Annuaire',I.book]]
 };
@@ -612,6 +612,16 @@ function mandatsView(mode){
       :`<button class="btn ghost" data-act="admAskArch" style="color:var(--bad)">Archiver l’entreprise</button>`)}`;
   return pil ? page(head({v:'ink',eb:'Espace pilotage DS / RS · '+ENT,t:'Annuaire',back:'pilotage'}), body, tabs('pil','annuaire'))
              : page(head({v:'ink',eb:'Administration SECAM',t:esc(e.name),back:'admin'}), body, tabs('adm','admin'));
+}
+const collSelect = (id, v) => `<select class="inp" id="${id}"><option value="" ${v?'':'selected'} disabled>Choisir mon collège</option>${Object.entries(COLLEGES).map(([k,l])=>`<option value="${k}" ${v===k?'selected':''}>${l}</option>`).join('')}</select>`;
+function symCollCard(){
+  return `<form id="symcolform" class="card" style="display:flex;flex-direction:column;gap:8px;border-color:var(--o);background:var(--soft)" novalidate>
+    <b>Quel est votre collège ?</b><span class="tiny">Il aide la section à mieux cibler ses informations. Vous pourrez le changer à tout moment dans « Mon compte ».</span>
+    ${collSelect('symcol1', S.symColl)}<button class="btn" type="submit">Enregistrer</button></form>`;
+}
+function setSymColl(k){
+  S.symColl = k;
+  const d = String(S.reg.tel).replace(/\D/g,''); const x = S.syms.find(y=>String(y.tel).replace(/\D/g,'')===d); if(x) x.c = k;
 }
 function joinCard(){
   if(me().r || S.status==='pending') return '';
@@ -844,7 +854,7 @@ traiter:{n:18,g:'pil',l:'À traiter',r(){
 annuaire:{n:'18 bis',g:'pil',l:'Annuaire (gestion par le RS)',r(){ return mandatsView('pil'); }},
 /* ---------------- Parcours sympathisant ---------------- */
 'sym-actu':{n:20,g:'sym',l:'Actualités',r(){
-  return page(head({eb:symEb(),t:'Actualités',p:'Les informations que la section partage avec les sympathisants.'}), `${me().r?restrictedCard():S.status==='pending'?pendingCard():''}
+  return page(head({eb:symEb(),t:'Actualités',p:'Les informations que la section partage avec les sympathisants.'}), `${me().r?restrictedCard():S.status==='pending'?pendingCard():''}${S.status==='sym'&&S.symNew&&!S.symColl?symCollCard():''}
     <div class="card"><div class="lbl">NAO · 2 nov.</div><b style="font-size:.92em">Ce que la CFDT demande cette année</b><p class="muted" style="margin:4px 0 0">Augmentation générale, prime de transport, égalité salariale femmes-hommes.</p></div>
     ${NAVETTE}
     <div class="card"><div class="lbl">Information dialogue social · 30 oct.</div><b style="font-size:.92em">Accord télétravail : deuxième réunion de négociation</b><p class="muted" style="margin:4px 0 0">La direction propose 1 jour par semaine. Nous demandons 2 jours et une indemnité.</p></div>
@@ -896,6 +906,18 @@ admin:{n:23,g:'adm',l:'Entreprises',r(){
         <div class="two"><button type="button" class="btn ghost" data-act="admCancel">Annuler</button><button class="btn" type="submit">Enregistrer</button></div></form>`
       :`<button class="btn ghost" data-act="admAddAdmin">+ Enregistrer une désignation du conseil</button>`}
     <div class="alert">${I.info}<div>Le secrétaire général est administrateur de droit. Les autres administrateurs sont désignés par une décision du conseil syndical, enregistrée ici et inscrite au journal.</div></div>`, tabs('adm','admin-admins'));
+}},
+'sym-compte':{n:'22 bis',g:'sym',l:'Mon compte (sympathisant)',r(){
+  return page(head({eb:symEb(),t:'Mon compte'}), `
+    <div class="card flush">
+      <div class="list-row"><label for="symcol">Mon collège</label>${collSelect('symcol', S.symColl).replace('class="inp"','class="inp" style="width:auto;padding:5px 6px;font-size:.92em;max-width:60%"')}</div>
+      <button class="list-row" data-act="mail" data-s="Changement de numéro de portable – ${ME.prenom} ${ME.nom}"><span>Changer de numéro de portable</span><span class="v">Prévenir la section ${I.chev}</span></button>
+      <div class="list-row"><span id="dk2">Mode sombre</span><button class="sw" role="switch" aria-labelledby="dk2" aria-checked="${S.dark}" data-act="dark"></button></div>
+      <button class="list-row" data-act="size"><span>Taille du texte</span><span class="v">${S.large?'Grande':'Normale'}</span></button>
+      <button class="list-row" data-go="connexion" style="color:var(--o-dk);font-weight:700">Se déconnecter</button>
+    </div>
+    <p class="tiny" style="margin:0">Votre collège sert uniquement à la section pour mieux cibler ses informations. Il n’est jamais transmis à l’employeur.</p>
+    ${joinCard()}`, tabs('sym','sym-compte'));
 }}
 };
 
@@ -1027,11 +1049,12 @@ phone.addEventListener('submit', e => { e.preventDefault();
   if(e.target.id==='telform'){ const m=S.members.find(x=>x.id===S.fiche)||S.members[1], t=document.getElementById('nt').value.trim();
     if(t.replace(/\D/g,'').length<10){ toast('Indiquez un numéro à 10 chiffres.'); return; }
     m.tel=t; S.telEdit=false; logIt(`${ENT} : numéro de portable de ${m.p} ${m.n} mis à jour`); toast('Numéro mis à jour. L\u2019adhérent se connecte avec ce nouveau numéro.'); }
+  if(e.target.id==='symcolform'){ const v=document.getElementById('symcol1').value; if(!v){ toast('Choisissez votre collège.'); return; } setSymColl(v); toast('Collège enregistré. Vous pouvez le changer dans « Mon compte ».'); }
   if(e.target.id==='regform'){ const v=id=>document.getElementById(id).value.trim();
     if(!S.consent) return;
     if(!v('ln')||!v('lp')||v('ltel').replace(/\D/g,'').length<10){ toast('Indiquez votre nom, votre prénom et un numéro de portable à 10 chiffres.'); return; }
     S.reg={n:v('ln'),p:v('lp'),tel:v('ltel'),mail:v('lmail')}; ME.nom=S.reg.n; ME.prenom=S.reg.p; go('statut'); }
-  if(e.target.id==='codeform'){ if(S.code.replace(/\D/g,'')==='482917'){ S.codeErr=false; if(S.flow==='retour'){ S.flow=null; if(S.retourAdh){ S.status='adh'; S.via='retour'; S.unlock=null; go('bienvenue'); } else { S.status='sym'; go('sym-actu'); } return; } S.status='sym'; S.syms.unshift({p:S.reg.p,n:S.reg.n,c:'N',tel:S.reg.tel,w:'à l\u2019instant'}); go('sym-actu'); } else { S.codeErr=true; render(true); } }
+  if(e.target.id==='codeform'){ if(S.code.replace(/\D/g,'')==='482917'){ S.codeErr=false; if(S.flow==='retour'){ S.flow=null; if(S.retourAdh){ S.status='adh'; S.via='retour'; S.unlock=null; go('bienvenue'); } else { S.status='sym'; go('sym-actu'); } return; } S.status='sym'; S.symNew=true; S.symColl=null; S.syms.unshift({p:S.reg.p,n:S.reg.n,c:'N',tel:S.reg.tel,w:'à l\u2019instant'}); go('sym-actu'); } else { S.codeErr=true; render(true); } }
   if(e.target.id==='mform'){ const v=id=>document.getElementById(id).value.trim(); const e2=ent(S.adm.ent);
     const x={role:v('mr'),n:v('mn'),tel:v('mt'),fin:v('mf')||'2030-06'};
     if(!x.n){ toast('Indiquez le prénom et le nom.'); return; }
@@ -1053,6 +1076,7 @@ phone.addEventListener('input', e => {
 });
 phone.addEventListener('change', e => {
   if(e.target.id==='col'){ S.college=e.target.value; toast('Collège enregistré.'); }
+  if(e.target.id==='symcol'){ setSymColl(e.target.value); toast('Collège enregistré.'); }
   if(e.target.id==='consent'){ S.consent=e.target.checked; render(true); }
 });
 
@@ -1074,7 +1098,7 @@ const h0 = location.hash.slice(1); if(h0 && SCREENS[h0]) go(h0, true); else rend
 
 <script>
 (function(){
-  var CODE = "NAO2026", KEY = 'secam-demo-ok', BUILD = "08/11 13h31";
+  var CODE = "NAO2026", KEY = 'secam-demo-ok', BUILD = "08/11 13h34";
   var gate = document.getElementById('gate'), form = document.getElementById('gateForm'),
       input = document.getElementById('gateCode'), err = document.getElementById('gateErr');
   function ok(){ try { return localStorage.getItem(KEY) === CODE; } catch(e){ return false; } }
