@@ -388,7 +388,7 @@ const appIcon = (v,size) => APPICONS[v].replace('<svg ', `<svg width="${size}" h
 const ENT = 'Entreprise A';
 const entOpts = () => ENTDATA.filter(e=>!e.arch).map(e=>e.name).map(e=>`<option ${e===ENT?'selected':''}>${e}</option>`).join('');
 const TRESO = 'tresorerie@secam-exemple.fr';
-const ME = {prenom:'Claire', nom:'Martin', npa:'0412 776', depuis:'2019'};
+const ME = {prenom:'Claire', nom:'Martin', depuis:'2019'};
 const COLLEGES = {E:'Ouvriers et employés', T:'Techniciens et agents de maîtrise', C:'Ingénieurs et cadres'};
 const SHORT = {E:'Employés', T:'TAM', C:'Cadres'};
 const ROLES = {
@@ -446,7 +446,8 @@ const S = {
     {id:7,p:'Antoine',n:'Mercier',c:'C',tel:'06 00 00 00 17',r:false}
   ],
   nAdh:142,
-  pending:[{p:'Inès',n:'Ferrand',npa:'0412 887'},{p:'Hugo',n:'Brunel',npa:'0412 903'},{p:'Sarah',n:'Ouali',npa:'0413 015'}],
+  pending:[{p:'Inès',n:'Ferrand',tel:'06 00 00 00 31',mail:'ines.ferrand@exemple.fr',d:'07/11'},{p:'Hugo',n:'Brunel',tel:'06 00 00 00 32',mail:'',d:'06/11'},{p:'Sarah',n:'Ouali',tel:'06 00 00 00 33',mail:'sarah.ouali@exemple.fr',d:'05/11'}],
+  reg:{n:'Martin',p:'Claire',tel:'06 00 00 00 12',mail:'claire.martin@exemple.fr'}, status:'adh', via:'fichier',
   syms:[
     {p:'Marc',n:'Ferri',c:'E',tel:'06 00 00 00 21',w:'il y a 3 j'},
     {p:'Élodie',n:'Garnier',c:'T',tel:'06 00 00 00 22',w:'il y a 1 sem.'},
@@ -514,32 +515,39 @@ function pollCard(who){
 }
 const NAVETTE = `<div class="card"><div class="lbl">Résultats du sondage · 16 oct.</div><b style="font-size:.92em">Une navette entre la gare et le site ? Oui à une large majorité</b><div class="tiny">Vote anonyme · résultats publiés par la section</div>
   <div class="res"><div><div class="l"><span>Oui</span><b>72 %</b></div><div class="bar"><i style="width:72%"></i></div></div><div><div class="l"><span>Non</span><b>28 %</b></div><div class="bar"><i style="width:28%"></i></div></div></div></div>`;
-function codeScreen(who){
-  const tel = who==='adh' ? '06 •• •• •• 12' : '06 •• •• •• 21';
-  const back = who==='adh' ? 'connexion' : 'sym-ident';
-  return page(head({eb: who==='adh'?'Connexion':'Espace sympathisant', t:'Vérification par SMS', back}), `
+function codeScreen(){
+  const d = S.reg.tel.replace(/\D/g,''), tel = d.length>=4 ? d.slice(0,2)+' •• •• •• '+d.slice(-2) : S.reg.tel;
+  return page(head({eb:'Inscription · étape 2 sur 3', t:'Vérification par SMS', back:'connexion'}), `
     <div class="center" style="padding-top:6px"><div class="bigicon">${I.sms}</div>
     <b style="font-size:1.1em">Saisissez le code reçu par SMS</b>
     <span class="muted">Nous avons envoyé un code à 6 chiffres au <b>${tel}</b>. Il est valable 10 minutes.</span></div>
-    <form id="codeform" data-w="${who}" class="card" style="display:flex;flex-direction:column;gap:10px" novalidate>
+    <form id="codeform" class="card" style="display:flex;flex-direction:column;gap:10px" novalidate>
       <label for="code" class="small" style="font-weight:600">Code de vérification</label>
       <input class="inp" id="code" value="${esc(S.code)}" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="––––––" style="font-size:1.6em;letter-spacing:.5em;text-align:center;font-variant-numeric:tabular-nums">
       ${S.codeErr?`<div class="alert" style="border-color:var(--bad);background:var(--badbg)"><div>Ce code ne correspond pas. Vérifiez le SMS ou demandez un nouveau code.</div></div>`:''}
       <button class="btn" type="submit" ${S.code.replace(/\D/g,'').length===6?'':'disabled'}>Valider le code</button>
     </form>
     <div class="center"><span class="muted">Vous n’avez rien reçu ?</span><button class="link" data-act="resend">Renvoyer le code</button></div>
-    <div class="alert">${I.info}<div>Prototype : le code de démonstration est <b>482 917</b>.</div></div>`);
+    <div class="alert">${I.info}<div>Ce code n\u2019est demandé qu\u2019une fois, à l\u2019inscription. Prototype : le code de démonstration est <b>482 917</b>.</div></div>`);
+}
+const pilotName = () => { const r = gP(ent(ENT)); return r ? r.n : 'Le délégué'; };
+const known = tel => S.members.some(m => m.tel.replace(/\D/g,'') === String(tel).replace(/\D/g,''));
+function pendingCard(){
+  return `<div class="card" style="display:flex;flex-direction:column;gap:10px;border-color:var(--o);background:var(--soft)">
+    <div style="display:flex;gap:10px;align-items:center"><div class="bigicon" style="width:2.4em;height:2.4em">${I.clock}</div><b>Votre demande d\u2019accès adhérent est en cours de vérification</b></div>
+    <span class="muted">Un délégué syndical ou le représentant syndical de ${ENT} va vérifier votre adhésion ; il peut vous appeler. En attendant, vous avez accès à l\u2019espace sympathisant. Vous recevrez une notification dès l\u2019ouverture de votre espace adhérent.</span>
+    <button class="btn ghost" data-act="seeRequest">Voir la demande côté délégué (démo) →</button></div>`;
 }
 function restrictedCard(){
   return `<div class="card" style="display:flex;flex-direction:column;gap:10px;border-color:var(--bad)">
     <div style="display:flex;gap:10px;align-items:center"><div class="bigicon lock" style="width:2.4em;height:2.4em">${I.lock}</div><b>Votre accès adhérent est suspendu</b></div>
     <span class="muted">Votre cotisation n’est pas à jour. En attendant, vous retrouvez l’espace sympathisant. Régularisez votre situation auprès du trésorier pour retrouver votre espace adhérent.</span>
-    <button class="btn" data-act="mail" data-to="treso" data-s="Régularisation de ma cotisation – NPA ${ME.npa}">${I.mail}Écrire au trésorier</button>
+    <button class="btn" data-act="mail" data-to="treso" data-s="Régularisation de ma cotisation – ${ME.prenom} ${ME.nom}">${I.mail}Écrire au trésorier</button>
     <span class="tiny">Dès que le trésorier a confirmé la régularisation, votre délégué syndical rétablit votre accès. Vous n’avez rien d’autre à faire.</span>
     <button class="btn ghost" data-act="restore-me">Simuler le rétablissement par le DS →</button></div>`;
 }
-const restrictedNote = () => me().r ? `<div class="alert" style="border-color:var(--bad);background:var(--badbg)">${I.lock}<div>Mode sympathisant : votre accès adhérent est suspendu. <button class="link" data-go="sym-delegues">En savoir plus</button></div></div>` : '';
-const symEb = () => (me().r ? 'Mode sympathisant · ' : 'Espace sympathisant · ') + ENT;
+const restrictedNote = () => S.status==='pending' ? `<div class="alert">${I.clock}<div>Votre demande d\u2019accès adhérent est en cours de vérification. <button class="link" data-go="sym-delegues">En savoir plus</button></div></div>` : me().r ? `<div class="alert" style="border-color:var(--bad);background:var(--badbg)">${I.lock}<div>Mode sympathisant : votre accès adhérent est suspendu. <button class="link" data-go="sym-delegues">En savoir plus</button></div></div>` : '';
+const symEb = () => (me().r ? 'Mode sympathisant · ' : S.status==='pending' ? 'Demande en cours · ' : 'Espace sympathisant · ') + ENT;
 function mandatsView(mode){
   const A=S.adm, e=ent(A.ent), pil = mode==='pil';
   const P = gP(e), Sx = gS(e), n = govCount(e), locked = pil && e.tut;
@@ -588,48 +596,42 @@ function mandatsView(mode){
              : page(head({v:'ink',eb:'Administration SECAM',t:esc(e.name),back:'admin'}), body, tabs('adm','admin'));
 }
 function joinCard(){
-  if(me().r) return '';
+  if(me().r || S.status==='pending') return '';
   return `<div class="join"><b>Rejoignez la CFDT en adhérant au SECAM</b><p>Les adhérents ont aussi la story, l’info du jour, l’agenda, les rubriques et le contact de la section par mail.</p>
   <button class="btn" data-act="bulletin">${I.dl} Bulletin d’adhésion (PDF)</button></div>`;
 }
 
 const SCREENS = {
 /* ---------------- Parcours adhérent ---------------- */
-connexion:{n:1,g:'adh',l:'Connexion',r(){
-  return `<div class="scr"><header class="hd orange" style="padding-top:40px"><span class="eb" style="font-size:.78em">SECAM Connect</span>
+connexion:{n:1,g:'adh',l:'Inscription',r(){
+  return `<div class="scr"><header class="hd orange" style="padding-top:40px"><span class="eb" style="font-size:.78em">SECAM Connect · inscription</span>
     <h3>Bienvenue dans votre espace syndical</h3><p>Syndicat Énergie Chimie Alpes Méditerranée</p></header>
     <div class="body">
-      <form id="login" class="card" style="display:flex;flex-direction:column;gap:10px" novalidate>
-        <div class="two"><div class="field"><label for="ln">Nom</label><input class="inp" id="ln" value="Martin"></div>
-        <div class="field"><label for="lp">Prénom</label><input class="inp" id="lp" value="Claire"></div></div>
-        <div class="field"><label for="lnpa">Numéro d’adhérent (NPA)</label><input class="inp" id="lnpa" value="0412 776" inputmode="numeric"></div>
-        <div class="field"><label for="ltel">Téléphone portable</label><input class="inp" id="ltel" value="06 00 00 00 12" inputmode="tel"><span class="tiny">Vous recevez un code par SMS pour confirmer que c’est bien vous.</span></div>
+      <form id="regform" class="card" style="display:flex;flex-direction:column;gap:10px" novalidate>
+        <div class="two"><div class="field"><label for="ln">Nom</label><input class="inp" id="ln" value="${esc(S.reg.n)}" autocomplete="family-name"></div>
+        <div class="field"><label for="lp">Prénom</label><input class="inp" id="lp" value="${esc(S.reg.p)}" autocomplete="given-name"></div></div>
         <div class="field"><label for="lent">Mon entreprise</label><select class="inp" id="lent">${entOpts()}</select></div>
-        <button class="btn" type="submit">Se connecter</button>
+        <div class="field"><label for="ltel">Téléphone portable</label><input class="inp" id="ltel" value="${esc(S.reg.tel)}" inputmode="tel" autocomplete="tel"><span class="tiny">Vous recevez un code par SMS pour confirmer que c’est bien vous.</span></div>
+        <div class="field"><label for="lmail">E-mail <span class="tiny">(facultatif)</span></label><input class="inp" id="lmail" value="${esc(S.reg.mail)}" inputmode="email" autocomplete="email"></div>
+        <label class="check"><input type="checkbox" id="consent" ${S.consent?'checked':''}> J’accepte que le SECAM utilise ces informations pour me contacter. Je peux retirer mon accord à tout moment.</label>
+        <button class="btn" type="submit" ${S.consent?'':'disabled'}>Recevoir le code par SMS</button>
       </form>
-      <div class="alert">${I.shield}<div>Première connexion : votre accès est validé par un délégué syndical, qui vérifie votre adhésion et votre cotisation.<br><button class="link" data-go="premiere">Demander mon accès</button></div></div>
-      <div class="center" style="margin-top:6px"><span class="muted">Pas encore adhérent ?</span><button class="link" data-go="sym-ident">Découvrir le SECAM en sympathisant</button></div>
+      <div class="alert">${I.shield}<div>L’inscription se fait une seule fois. Ensuite, l’application s’ouvre avec votre code PIN ou Face ID.</div></div>
+      <div class="alert ok">${I.info}<div>Démo : avec le <b>06 00 00 00 12</b> (Claire Martin), vous êtes reconnue comme adhérente. Avec un autre numéro, la demande part en vérification auprès des délégués.</div></div>
       <p class="tiny" style="text-align:center;margin-top:auto">Vos données sont protégées et ne sont jamais transmises à l’employeur.</p>
     </div></div>`;
 }},
-'code-sms':{n:'1 bis',g:'adh',l:'Code SMS',r(){ return codeScreen('adh'); }},
-premiere:{n:2,g:'adh',l:'Première connexion',r(){
-  return page(head({t:'Première connexion',back:'connexion'}), `
-    <div class="center" style="padding-top:10px"><div class="bigicon">${I.clock}</div>
-    <b style="font-size:1.15em">Votre demande d’accès est en cours de vérification</b>
-    <span class="muted">Un délégué syndical de votre entreprise valide votre accès. Vous recevez une notification dès l’ouverture de votre espace.</span></div>
-    <div class="card flush steps">
-      <div class="step"><span class="dot done">${I.check}</span><div><b>Demande envoyée</b><span class="tiny">Nom, prénom, NPA, entreprise · téléphone vérifié par SMS</span></div></div>
-      <div class="step"><span class="dot cur">2</span><div><b>Vérification par un délégué syndical</b><span class="tiny">Adhésion confirmée et cotisation à jour · en cours</span></div></div>
-      <div class="step"><span class="dot">3</span><div><b>Accès à votre espace adhérent</b><span class="tiny">Informations, délégués, sondages, compte</span></div></div>
-    </div>
-    <p class="tiny" style="text-align:center">Une question ? Contactez votre section : ${ent(ENT).mail}</p>
-    <button class="btn ghost" data-go="bienvenue" style="margin-top:auto">Simuler la validation par le DS →</button>`);
+'code-sms':{n:'1 bis',g:'adh',l:'Code SMS',r(){ return codeScreen(); }},
+statut:{n:2,g:'adh',l:'Adhérent ou sympathisant ?',r(){
+  return page(head({eb:'Inscription · étape 3 sur 3',t:'Vous êtes…',back:'code-sms',p:'Votre portable est confirmé. Dites-nous si vous êtes adhérent du SECAM.'}), `
+    <button class="space" data-act="choose" data-k="adh"><span class="ic">${I.shield}</span><span style="flex:1;min-width:0"><b style="display:block">Je suis adhérent</b><span class="tiny">Je cotise au SECAM. Si mon portable figure dans le fichier des adhérents de la section, j’accède tout de suite à l’espace adhérent ; sinon un délégué vérifie.</span></span>${I.chev.replace('<svg','<svg width="16" height="16"')}</button>
+    <button class="space" data-act="choose" data-k="sym"><span class="ic">${I.users}</span><span style="flex:1;min-width:0"><b style="display:block">Je suis sympathisant</b><span class="tiny">Je découvre le syndicat : délégués, sondages et actualités ouvertes aux sympathisants.</span></span>${I.chev.replace('<svg','<svg width="16" height="16"')}</button>
+    <p class="tiny" style="margin:0">Vous pourrez adhérer à tout moment avec le bulletin d’adhésion.</p>`);
 }},
 bienvenue:{n:3,g:'adh',l:'Bienvenue',r(){
   const ready = !!S.unlock;
   return `<div class="scr"><header class="hd orange" style="padding-top:40px"><span class="eb" style="font-size:.78em">SECAM Connect</span>
-    <h3>Bienvenue ${ME.prenom}, votre accès est ouvert</h3><p>Votre délégué a confirmé votre adhésion. Trois étapes pour bien démarrer.</p></header>
+    <h3>Bienvenue ${ME.prenom}, votre accès est ouvert</h3><p>${S.via==='ds'?'Un délégué a confirmé votre adhésion.':'Votre portable figure dans le fichier des adhérents de la section.'} Trois étapes pour bien démarrer.</p></header>
     <div class="body">
       <div class="card"><div class="lbl">1 · Votre délégué syndical</div><div class="person" style="padding:8px 0 0;border:0"><div class="av">DS</div><div class="who"><b>${(delegs(ENT)[0]||{n:'À désigner'}).n}</b><span>Il ou elle est là pour vous : appel ou SMS en un geste.</span></div></div></div>
       <div class="card"><div class="lbl">2 · Vos sujets</div><div class="chips" style="margin-top:8px">${Object.keys(S.subjects).map(k=>`<button class="chip" data-act="subj" data-k="${k}" aria-pressed="${S.subjects[k]}">${k}</button>`).join('')}</div></div>
@@ -675,10 +677,10 @@ delegues:{n:7,g:'adh',l:'Délégués',adh:1,r(){
   return page(head({eb:'SECAM · '+ENT,t:'Mes délégués',p:'Vos représentants dans l’entreprise. Un appui ouvre l’appel ou les SMS de votre téléphone.'}), people(delegs(ENT)), tabs('adh','delegues'));
 }},
 compte:{n:8,g:'adh',l:'Mon compte',adh:1,r(){
-  return page(head({eb:`Adhérente · NPA ${ME.npa} · ${ENT}`,t:'Mon compte'}), `
+  return page(head({eb:`Adhérente · ${ENT}`,t:'Mon compte'}), `
     <div class="card" style="display:flex;flex-direction:column;gap:8px"><b style="font-size:.92em">Mes espaces</b>
       <span class="tiny" style="margin-top:-4px">Vos mandats vous ouvrent d\u2019autres espaces. Touchez pour y passer.</span>${spacesList()}</div>
-    <button class="card storycard" data-act="mail" data-s="Actualiser ma cotisation – NPA ${ME.npa}" data-to="section"><span class="bigicon" style="width:2.4em;height:2.4em">${I.mail}</span><span style="flex:1"><b style="font-size:.92em">Actualiser ma cotisation</b><br><span class="tiny">Ouvre votre messagerie avec un e-mail prêt à envoyer à la section.</span></span>${I.chev.replace('<svg','<svg width="16" height="16"')}</button>
+    <button class="card storycard" data-act="mail" data-s="Actualiser ma cotisation – ${ME.prenom} ${ME.nom}" data-to="section"><span class="bigicon" style="width:2.4em;height:2.4em">${I.mail}</span><span style="flex:1"><b style="font-size:.92em">Actualiser ma cotisation</b><br><span class="tiny">Ouvre votre messagerie avec un e-mail prêt à envoyer à la section.</span></span>${I.chev.replace('<svg','<svg width="16" height="16"')}</button>
     <div class="card flush">
       <div class="list-row"><label for="col">Mon collège</label><select id="col" class="inp" style="width:auto;padding:5px 6px;font-size:.92em">${Object.entries(COLLEGES).map(([k,v])=>`<option value="${k}" ${S.college===k?'selected':''}>${v}</option>`).join('')}</select></div>
       <button class="list-row" data-go="icone"><span>Icône de l\u2019application</span><span class="v">${appIcon(S.icon,24)}${I.chev}</span></button>
@@ -786,29 +788,24 @@ publier:{n:17,g:'pil',l:'Publier',r(){
 }},
 traiter:{n:18,g:'pil',l:'À traiter',r(){
   return page(head({v:'ink',eb:'Espace pilotage DS / RS · '+ENT,t:'À traiter',back:'pilotage'}), `
-    <div class="lbl">Demandes d’accès à valider · ${S.pending.length}</div>
-    <span class="muted" style="margin-top:-6px">Les questions et propositions arrivent par e-mail sur l’adresse de la section.</span>
-    ${S.pending.length?`<div class="card flush">${S.pending.map((p,i)=>`<div class="person"><div class="who"><b>${p.p} ${p.n}</b><span>NPA ${p.npa} · adhésion à vérifier</span></div><button class="btn sm" data-act="validate" data-i="${i}">Valider</button></div>`).join('')}</div>`
-      :`<div class="alert ok">${I.check}<div>Toutes les demandes sont traitées.</div></div>`}`, tabs('pil','traiter'));
+    <div class="lbl">Demandes d’accès adhérent · ${S.pending.length}</div>
+    <span class="muted" style="margin-top:-6px">Ces personnes se déclarent adhérentes mais leur portable n’est pas dans le fichier de la section. Visible par tous les DS et RS de ${ENT}. Les questions et propositions arrivent par e-mail sur l’adresse de la section.</span>
+    ${S.pending.length?S.pending.map((p,i)=>`<div class="card" style="display:flex;flex-direction:column;gap:8px">
+      <div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start"><div><b>${esc(p.p)} ${esc(p.n.toUpperCase())}</b>${p.me?' <span class="tag">Vous (démo)</span>':''}<div class="tiny">Inscrit le ${p.d} · se déclare adhérent</div></div><span class="pill" style="background:var(--soft);color:var(--o-dk)">À vérifier</span></div>
+      <div class="small">Portable : <b style="white-space:nowrap">${p.tel}</b><br>E-mail : ${p.mail?`<b style="overflow-wrap:anywhere">${esc(p.mail)}</b>`:'<span class="muted">non renseigné</span>'}</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <button class="btn sm ghost" data-act="call" data-n="${esc(p.p+' '+p.n)}" data-tel="${p.tel}">${I.phone}Appeler</button>
+        <button class="btn sm ghost" data-act="sms" data-n="${esc(p.p+' '+p.n)}" data-tel="${p.tel}">${I.sms}SMS</button>
+        ${p.mail?`<button class="btn sm ghost" data-act="mail" data-addr="${esc(p.mail)}" data-n="${esc(p.p)}" data-s="Votre demande d’accès adhérent – SECAM Connect">${I.mail}E-mail</button>`:''}</div>
+      <div class="two"><button class="btn sm ghost" data-act="decide" data-d="no" data-i="${i}" style="width:100%;border-radius:10px">Refuser (reste sympathisant)</button><button class="btn sm" data-act="decide" data-d="ok" data-i="${i}" style="width:100%;border-radius:10px">Valider comme adhérent</button></div>
+    </div>`).join('')
+      :`<div class="alert ok">${I.check}<div>Toutes les demandes sont traitées.</div></div>`}
+    <p class="tiny" style="margin:0">Chaque décision est inscrite au journal des modifications (qui, quoi, quand).</p>`, tabs('pil','traiter'));
 }},
-
 annuaire:{n:'18 bis',g:'pil',l:'Annuaire (gestion par le RS)',r(){ return mandatsView('pil'); }},
 /* ---------------- Parcours sympathisant ---------------- */
-'sym-ident':{n:19,g:'sym',l:'Identification',r(){
-  return page(head({eb:'Espace sympathisant',t:'Je m’identifie',back:'connexion'}), `
-    <form id="symform" style="display:flex;flex-direction:column;gap:10px" novalidate>
-    <div class="two"><div class="field"><label for="sn">Nom</label><input class="inp" id="sn" value="Ferri"></div><div class="field"><label for="sp">Prénom</label><input class="inp" id="sp" value="Marc"></div></div>
-    <div class="field"><label for="se">Entreprise</label><select class="inp" id="se">${entOpts()}</select></div>
-    <div class="field"><label for="sc">Collège</label><select class="inp" id="sc">${Object.values(COLLEGES).map(v=>`<option>${v}</option>`).join('')}</select></div>
-    <div class="field"><label for="st">Téléphone</label><input class="inp" id="st" value="06 00 00 00 21" inputmode="tel"></div>
-    <div class="field"><label for="sm">Adresse e-mail</label><input class="inp" id="sm" value="marc.ferri@exemple.fr" inputmode="email"></div>
-    <label class="check"><input type="checkbox" id="consent" ${S.consent?'checked':''}> J’accepte que le SECAM utilise ces informations pour me contacter. Je peux retirer mon accord à tout moment.</label>
-    <button class="btn" type="submit" ${S.consent?'':'disabled'}>Accéder à l’espace sympathisant</button></form>
-    <p class="tiny" style="text-align:center">Vos données sont protégées et ne sont jamais transmises à l’employeur.</p>`);
-}},
-'sym-code':{n:'19 bis',g:'sym',l:'Code SMS',r(){ return codeScreen('sym'); }},
 'sym-delegues':{n:20,g:'sym',l:'Délégués',r(){
-  return page(head({eb:symEb(),t:'Vos délégués et élus',p:'Joignez-les directement par appel ou SMS.'}), (me().r?restrictedCard():'')+people(delegs(ENT))+joinCard(), tabs('sym','sym-delegues'));
+  return page(head({eb:symEb(),t:'Vos délégués et élus',p:'Joignez-les directement par appel ou SMS.'}), (me().r?restrictedCard():S.status==='pending'?pendingCard():'')+people(delegs(ENT))+joinCard(), tabs('sym','sym-delegues'));
 }},
 'sym-sondages':{n:21,g:'sym',l:'Sondages',r(){
   return page(head({eb:symEb(),t:'Sondages',p:'Donnez votre avis sur les sujets que porte la section.'}), `${restrictedNote()}
@@ -895,22 +892,22 @@ function go(id, fromHash){
   let t = SCREENS[id]; if(!t) return;
   if(t.pre) t.pre();
   if(t.alias){ id = t.alias; t = SCREENS[id]; }
-  if(t.adh && me().r) id = 'sym-delegues';
+  if(t.adh && (me().r || S.status!=='adh')) id = 'sym-delegues';
   if(id==='annuaire') Object.assign(S.adm,{ent:ENT,edit:null,add:false,del:null,arch:false});
   S.screen = id; S.sheet = null; S.confirm = false;
   if(id!=='story') S.playing = false;
   try{ if(location.hash.slice(1)!==id) history.replaceState(null,'','#'+id); }catch(e){}
   render(false);
 }
-function logIt(what){ const d=new Date(); S.log.unshift({d:String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0'), who: S.screen==='annuaire' ? (()=>{ const r=gP(ent(ENT)); return r?`${r.n} (gestionnaire principal)`:'Gestionnaire suppléant'; })() : `${SG} (secrétaire général)`, what}); }
+function logIt(what){ const d=new Date(); S.log.unshift({d:String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0'), who: (SCREENS[S.screen]||{}).g==='pil' ? (()=>{ const r=gP(ent(ENT)); return r?`${r.n} (${r.role})`:'Gestionnaire suppléant'; })() : `${SG} (secrétaire général)`, what}); }
 function toast(t, undo){
   S.toast = {t, undo}; render(true);
   clearTimeout(toastTimer); toastTimer = setTimeout(()=>{ S.toast=null; render(true); }, 3200);
 }
 
 const ACT = {
-  mail(el){ const to = el.dataset.to==='treso'?TRESO:ent(ENT).mail; const sub = el.dataset.s||'Question';
-    S.sheet = {kind:'mail', to, subject:sub, body:`Bonjour,\n\n…\n\n${ME.prenom} ${ME.nom} · NPA ${ME.npa}\n${ENT}`}; render(true); },
+  mail(el){ const to = el.dataset.addr || (el.dataset.to==='treso'?TRESO:ent(ENT).mail); const sub = el.dataset.s||'Question';
+    S.sheet = {kind:'mail', to, subject:sub, body:el.dataset.addr?`Bonjour ${el.dataset.n||''},\n\n…\n\n${pilotName()} · section SECAM ${ENT}`:`Bonjour,\n\n…\n\n${ME.prenom} ${ME.nom}\n${ENT}`}; render(true); },
   call(el){ S.sheet={kind:'call',n:el.dataset.n,tel:el.dataset.tel}; render(true); },
   sms(el){ S.sheet={kind:'sms',n:el.dataset.n,tel:el.dataset.tel}; render(true); },
   bulletin(){ S.sheet={kind:'pdf'}; render(true); },
@@ -948,6 +945,17 @@ const ACT = {
   admRmAdmin(el){ const a=S.admins.splice(+el.dataset.i,1)[0]; logIt(`Désignation de ${a.n} comme administrateur retirée`); toast(`${a.n} n’est plus administrateur.`); },
   admAskArch(){ S.adm.arch=true; render(true); },
   admArch(){ const e=ent(S.adm.ent); e.arch=true; S.adm.arch=false; logIt(`${e.name} : entreprise archivée`); go('admin'); },
+  choose(el){
+    S.pending=S.pending.filter(x=>!x.me);
+    if(el.dataset.k==='sym'){ S.status='sym'; S.syms.unshift({p:S.reg.p,n:S.reg.n,c:'E',tel:S.reg.tel,w:'à l\u2019instant'}); go('sym-delegues'); return; }
+    if(known(S.reg.tel)){ S.status='adh'; S.via='fichier'; go('bienvenue'); return; }
+    const d=new Date(); S.pending.unshift({p:S.reg.p,n:S.reg.n,tel:S.reg.tel,mail:S.reg.mail,d:String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0'),me:true});
+    S.status='pending'; go('sym-delegues'); },
+  seeRequest(){ go('traiter'); },
+  decide(el){ const p=S.pending.splice(+el.dataset.i,1)[0], ok=el.dataset.d==='ok', who=`${p.p} ${p.n}`;
+    if(ok){ S.nAdh++; logIt(`${ENT} : ${who} validé comme adhérent`); if(p.me){ S.status='adh'; S.via='ds'; } }
+    else { S.syms.unshift({p:p.p,n:p.n,c:'E',tel:p.tel,w:'à l\u2019instant'}); logIt(`${ENT} : demande d\u2019accès adhérent de ${who} refusée (reste sympathisant)`); if(p.me) S.status='sym'; }
+    toast(ok?`${who} est validé comme adhérent. Une notification lui est envoyée.`:`${who} reste sympathisant.`); },
   validate(el){ const p=S.pending.splice(+el.dataset.i,1)[0]; S.nAdh++; toast(`Accès de ${p.p} ${p.n} validé. Une notification lui est envoyée.`); },
   pub(el){ S.pub=el.dataset.k; render(true); },
   aud(el){ S.aud=el.dataset.k; render(true); },
@@ -962,8 +970,11 @@ phone.addEventListener('click', e => {
   const a = e.target.closest('[data-act]'); if(a && ACT[a.dataset.act] && !a.disabled){ ACT[a.dataset.act](a, e); }
 });
 phone.addEventListener('submit', e => { e.preventDefault();
-  if(e.target.id==='login'){ S.code=''; S.codeErr=false; go('code-sms'); }
-  if(e.target.id==='codeform'){ if(S.code.replace(/\D/g,'')==='482917'){ S.codeErr=false; go(e.target.dataset.w==='adh'?'premiere':'sym-delegues'); } else { S.codeErr=true; render(true); } }
+  if(e.target.id==='regform'){ const v=id=>document.getElementById(id).value.trim();
+    if(!S.consent) return;
+    if(!v('ln')||!v('lp')||v('ltel').replace(/\D/g,'').length<10){ toast('Indiquez votre nom, votre prénom et un numéro de portable à 10 chiffres.'); return; }
+    S.reg={n:v('ln'),p:v('lp'),tel:v('ltel'),mail:v('lmail')}; ME.nom=S.reg.n; ME.prenom=S.reg.p; S.code=''; S.codeErr=false; go('code-sms'); }
+  if(e.target.id==='codeform'){ if(S.code.replace(/\D/g,'')==='482917'){ S.codeErr=false; go('statut'); } else { S.codeErr=true; render(true); } }
   if(e.target.id==='mform'){ const v=id=>document.getElementById(id).value.trim(); const e2=ent(S.adm.ent);
     const x={role:v('mr'),n:v('mn'),tel:v('mt'),fin:v('mf')||'2030-06'};
     if(!x.n){ toast('Indiquez le prénom et le nom.'); return; }
@@ -977,7 +988,6 @@ phone.addEventListener('submit', e => { e.preventDefault();
   if(e.target.id==='entform'){ const n=document.getElementById('en').value.trim(), m=document.getElementById('em').value.trim();
     if(!n){ toast('Indiquez le nom de l\u2019entreprise.'); return; }
     ENTDATA.push({name:n, mail:m||('section@secam-exemple.fr'), adh:0, m:[]}); logIt(`${n} : entreprise ajoutée`); S.adm.addEnt=false; S.adm.ent=n; go('admin-ent'); }
-  if(e.target.id==='symform' && S.consent){ S.code=''; S.codeErr=false; go('sym-code'); }
 });
 phone.addEventListener('input', e => {
   if(e.target.id==='q'){ S.q=e.target.value; render(true); }
@@ -996,8 +1006,8 @@ GROUPS.forEach(([g,label]) => {
   groupsEl.insertAdjacentHTML('beforeend', `<div class="grp"><h2>${label}</h2><ol>${items.map(([id,s])=>`<li><button data-s="${id}"><span class="n">${s.n}</span>${s.l}</button></li>`).join('')}</ol></div>`);
   pick.insertAdjacentHTML('beforeend', `<optgroup label="${label}">${items.map(([id,s])=>`<option value="${id}">${s.n}. ${s.l}</option>`).join('')}</optgroup>`);
 });
-groupsEl.addEventListener('click', e => { const b=e.target.closest('button[data-s]'); if(!b) return; if(b.dataset.s==='compte') S.dark=false; go(b.dataset.s, true); });
-pick.addEventListener('change', () => { if(pick.value==='compte') S.dark=false; go(pick.value, true); });
+groupsEl.addEventListener('click', e => { const b=e.target.closest('button[data-s]'); if(!b) return; if(SCREENS[b.dataset.s].adh) S.status='adh'; if(b.dataset.s==='compte') S.dark=false; go(b.dataset.s, true); });
+pick.addEventListener('change', () => { if(SCREENS[pick.value].adh) S.status='adh'; if(pick.value==='compte') S.dark=false; go(pick.value, true); });
 
 function fromHash(){ const h = location.hash.slice(1); if(h && SCREENS[h] && h!==S.screen) go(h, true); }
 window.addEventListener('hashchange', fromHash);
@@ -1007,7 +1017,7 @@ const h0 = location.hash.slice(1); if(h0 && SCREENS[h0]) go(h0, true); else rend
 
 <script>
 (function(){
-  var CODE = "NAO2026", KEY = 'secam-demo-ok', BUILD = "08/11 12h50";
+  var CODE = "NAO2026", KEY = 'secam-demo-ok', BUILD = "08/11 13h00";
   var gate = document.getElementById('gate'), form = document.getElementById('gateForm'),
       input = document.getElementById('gateCode'), err = document.getElementById('gateErr');
   function ok(){ try { return localStorage.getItem(KEY) === CODE; } catch(e){ return false; } }
