@@ -762,17 +762,17 @@ pilotage:{n:13,g:'pil',l:'Tableau de bord',r(){
     </div>
     <div class="card"><div style="display:flex;justify-content:space-between;align-items:center"><b>Sondage en cours</b><span class="live">EN DIRECT</span></div>
       <div class="tiny">Priorité pour les NAO · vote anonyme · % des votants de chaque public</div>
-      <div class="legend" style="margin:8px 0"><div><span class="sq" style="background:var(--btn)"></span>Adhérents<br><b>${Math.round((POLL.adh.votes+(S.adhEver?1:0))/S.nAdh*100)} %</b> · ${POLL.adh.votes+(S.adhEver?1:0)}/${S.nAdh}</div><div><span class="sq" style="background:var(--o)"></span>Sympathisants<br><b>${Math.round((POLL.sym.votes+(S.symEver?1:0))/38*100)} %</b> · ${POLL.sym.votes+(S.symEver?1:0)}/38</div></div>
-      <div class="res">${POLL.opts.map((o,i)=>`<div><div class="l"><b>${o}</b><span>${POLL.adh.pct[i]} % · ${POLL.sym.pct[i]} %</span></div><div class="bar ink"><i style="width:${POLL.adh.pct[i]}%"></i></div><div class="bar" style="margin-top:3px"><i style="width:${POLL.sym.pct[i]}%"></i></div></div>`).join('')}</div></div>
+      <div class="legend" style="margin:8px 0"><div><span class="sq" style="background:var(--o)"></span>Adhérents<br><b>${Math.round((POLL.adh.votes+(S.adhEver?1:0))/S.nAdh*100)} %</b> · ${POLL.adh.votes+(S.adhEver?1:0)}/${S.nAdh}</div><div><span class="sq" style="background:var(--btn)"></span>Sympathisants<br><b>${Math.round((POLL.sym.votes+(S.symEver?1:0))/38*100)} %</b> · ${POLL.sym.votes+(S.symEver?1:0)}/38</div></div>
+      <div class="res">${POLL.opts.map((o,i)=>`<div><div class="l"><b>${o}</b><span>${POLL.adh.pct[i]} % · ${POLL.sym.pct[i]} %</span></div><div class="bar"><i style="width:${POLL.adh.pct[i]}%"></i></div><div class="bar ink" style="margin-top:3px"><i style="width:${POLL.sym.pct[i]}%"></i></div></div>`).join('')}</div></div>
     ${(()=>{ const c=collCount(), rows=[['E','Ouvriers et employés'],['T','Techniciens et agents de maîtrise'],['C','Ingénieurs et cadres'],['N','Non renseigné']];
       return `<div class="card"><div style="display:flex;justify-content:space-between;align-items:baseline"><b>Adhérents par collège</b><span class="tiny">chiffres fictifs</span></div>
       <div class="stats" style="grid-template-columns:repeat(4,1fr);margin-top:8px">${rows.map(([k,l])=>`<button class="stat" data-act="collGo" data-k="${k==='N'?'all':k}" style="padding:8px"><b style="font-size:1.25em">${c[k]}</b><span>${k==='E'?'Employés':k==='T'?'TAM':k==='C'?'Cadres':'Non renseigné'}</span></button>`).join('')}</div>
-      <div class="res">${rows.map(([k,l])=>{ const v=Math.round(c[k]/S.nAdh*100); return `<div><div class="l"><span>${l}</span><b>${c[k]} · ${v} %</b></div><div class="bar ink"><i style="width:${v}%"></i></div></div>`; }).join('')}</div>
+      <div class="res">${rows.map(([k,l])=>{ const v=Math.round(c[k]/S.nAdh*100); return `<div><div class="l"><span>${l}</span><b>${c[k]} · ${v} %</b></div><div class="bar"><i style="width:${v}%"></i></div></div>`; }).join('')}</div>
       <div class="l small" style="display:flex;justify-content:space-between;margin-top:8px;border-top:1px solid var(--bd);padding-top:6px"><span>Total</span><b>${S.nAdh} adhérents</b></div></div>`; })()}
     ${(()=>{ const c=symCount(), tot=symTotal(), rows=[['E','Ouvriers et employés'],['T','Techniciens et agents de maîtrise'],['C','Ingénieurs et cadres'],['N','Non renseigné']];
       return `<div class="card"><div style="display:flex;justify-content:space-between;align-items:baseline"><b>Sympathisants par collège</b><span class="tiny">chiffres fictifs</span></div>
       <div class="stats" style="grid-template-columns:repeat(4,1fr);margin-top:8px">${rows.map(([k])=>`<button class="stat" data-act="symCollGo" data-k="${k==='N'?'all':k}" style="padding:8px"><b style="font-size:1.25em">${c[k]}</b><span>${k==='E'?'Employés':k==='T'?'TAM':k==='C'?'Cadres':'Non renseigné'}</span></button>`).join('')}</div>
-      <div class="res">${rows.map(([k,l])=>{ const v=Math.round(c[k]/tot*100); return `<div><div class="l"><span>${l}</span><b>${c[k]} · ${v} %</b></div><div class="bar"><i style="width:${v}%"></i></div></div>`; }).join('')}</div>
+      <div class="res">${rows.map(([k,l])=>{ const v=Math.round(c[k]/tot*100); return `<div><div class="l"><span>${l}</span><b>${c[k]} · ${v} %</b></div><div class="bar ink"><i style="width:${v}%"></i></div></div>`; }).join('')}</div>
       <div class="l small" style="display:flex;justify-content:space-between;margin-top:8px;border-top:1px solid var(--bd);padding-top:6px"><span>Total</span><b>${tot} sympathisants</b></div></div>`; })()}`,
     tabs('pil','pilotage'));
 }},
@@ -1098,7 +1098,7 @@ const h0 = location.hash.slice(1); if(h0 && SCREENS[h0]) go(h0, true); else rend
 
 <script>
 (function(){
-  var CODE = "NAO2026", KEY = 'secam-demo-ok', BUILD = "08/11 13h34";
+  var CODE = "NAO2026", KEY = 'secam-demo-ok', BUILD = "08/11 13h35";
   var gate = document.getElementById('gate'), form = document.getElementById('gateForm'),
       input = document.getElementById('gateCode'), err = document.getElementById('gateErr');
   function ok(){ try { return localStorage.getItem(KEY) === CODE; } catch(e){ return false; } }
