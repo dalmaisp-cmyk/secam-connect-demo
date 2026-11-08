@@ -267,6 +267,13 @@ button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{ou
 .mail div{padding:8px 10px;border-bottom:1px solid var(--bd);overflow-wrap:anywhere}
 .mail div:last-child{border-bottom:0;white-space:pre-line;color:var(--sub)}
 .mail span{color:var(--sub);display:inline-block;width:3.6em}
+.swbtn{flex:none;display:inline-flex;align-items:center;gap:5px;border:1px solid rgba(255,255,255,.35);background:rgba(255,255,255,.1);color:#fff;border-radius:999px;padding:5px 10px;font-size:.72em;font-weight:700}
+.swbtn svg{width:1.1em;height:1.1em}
+.space{display:flex;align-items:center;gap:12px;width:100%;text-align:left;border:1px solid var(--bd);background:var(--card);color:var(--tx);border-radius:12px;padding:12px}
+.space .ic{width:2.4em;height:2.4em;border-radius:10px;background:var(--soft);color:var(--o-dk);display:flex;align-items:center;justify-content:center;flex:none}
+.space .ic svg{width:1.3em;height:1.3em}
+.space[aria-current="true"]{border-color:var(--o);background:var(--soft)}
+.space[aria-current="true"] .ic{background:var(--o);color:var(--on-o)}
 .toast{position:absolute;left:14px;right:14px;bottom:86px;background:var(--btn);color:var(--btn-tx);border-radius:10px;padding:10px 12px;font-size:.82em;font-weight:600;z-index:6;display:flex;gap:10px;align-items:center;justify-content:space-between}
 .toast button{background:none;border:0;color:var(--o);font-weight:800;padding:0}
 
@@ -354,6 +361,7 @@ const I = {
   mail:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/></svg>',
   lock:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>',
   clock:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
+  swap:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7h13l-4-4M17 17H4l4 4"/></svg>',
   check:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>',
   chev:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>',
   back:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>',
@@ -458,10 +466,20 @@ const S = {
 const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const me = () => S.members.find(m => m.me);
 
+const SPACES = [
+  ['adh','accueil','Mon espace adhérent','Actualités, agenda, délégués, mon compte', 'home'],
+  ['pil','pilotage',`Pilotage DS / RS · ${ENT}`,'Adhérents, publications, accès à valider, annuaire', 'gauge'],
+  ['adm','admin','Administration SECAM','Entreprises, gouvernance, administrateurs', 'shield']
+];
+function spacesList(){
+  const cur = (SCREENS[S.screen]||{}).g;
+  return SPACES.map(([g,to,t,d,ic])=>`<button class="space" data-act="space" data-to="${to}" aria-current="${cur===g}">
+    <span class="ic">${I[ic]}</span><span style="flex:1;min-width:0"><b style="display:block;font-size:.95em">${t}</b><span class="tiny">${d}</span></span>${cur===g?'<span class="pill">Ouvert</span>':I.chev.replace('<svg','<svg width="16" height="16"')}</button>`).join('');
+}
 function head(o){
   return `<header class="hd ${o.v||''}">
     <div class="row">${o.back?`<button class="back" data-go="${o.back}" aria-label="Retour">${I.back}</button>`:''}<span class="eb">${o.eb||''}</span></div>
-    <h3>${o.t}</h3>${o.p?`<p>${o.p}</p>`:''}</header>`;
+    ${o.v==='ink'?`<div style="display:flex;align-items:center;justify-content:space-between;gap:8px"><h3>${o.t}</h3><button class="swbtn" data-act="spaces" aria-label="Changer d\u2019espace">${I.swap}Espaces</button></div>`:`<h3>${o.t}</h3>`}${o.p?`<p>${o.p}</p>`:''}</header>`;
 }
 const TABS = {
   adh:[['accueil','Accueil',I.home],['agenda','Agenda',I.cal],['delegues','Délégués',I.users],['compte','Mon compte',I.user]],
@@ -660,6 +678,8 @@ delegues:{n:7,g:'adh',l:'Délégués',adh:1,r(){
 }},
 compte:{n:8,g:'adh',l:'Mon compte',adh:1,r(){
   return page(head({eb:`Adhérente · NPA ${ME.npa} · ${ENT}`,t:'Mon compte'}), `
+    <div class="card" style="display:flex;flex-direction:column;gap:8px"><b style="font-size:.92em">Mes espaces</b>
+      <span class="tiny" style="margin-top:-4px">Vos mandats vous ouvrent d\u2019autres espaces. Touchez pour y passer.</span>${spacesList()}</div>
     <button class="card storycard" data-act="mail" data-s="Actualiser ma cotisation – NPA ${ME.npa}" data-to="section"><span class="bigicon" style="width:2.4em;height:2.4em">${I.mail}</span><span style="flex:1"><b style="font-size:.92em">Actualiser ma cotisation</b><br><span class="tiny">Ouvre votre messagerie avec un e-mail prêt à envoyer à la section.</span></span>${I.chev.replace('<svg','<svg width="16" height="16"')}</button>
     <div class="card flush">
       <div class="list-row"><label for="col">Mon collège</label><select id="col" class="inp" style="width:auto;padding:5px 6px;font-size:.92em">${Object.entries(COLLEGES).map(([k,v])=>`<option value="${k}" ${S.college===k?'selected':''}>${v}</option>`).join('')}</select></div>
@@ -855,9 +875,10 @@ function sheetHTML(){
   if(s.kind==='mail') inner = `<h4>Votre messagerie s’ouvrirait avec cet e-mail</h4><div class="mail"><div><span>À</span>${s.to}</div><div><span>Objet</span>${esc(s.subject)}</div><div>${esc(s.body)}</div></div>`;
   else if(s.kind==='call') inner = `<h4>L’application Téléphone s’ouvrirait</h4><div class="mail"><div><span>Appel</span>${esc(s.n)}</div><div><span>Numéro</span>${s.tel}</div></div>`;
   else if(s.kind==='sms') inner = `<h4>L’application Messages s’ouvrirait</h4><div class="mail"><div><span>À</span>${esc(s.n)} · ${s.tel}</div><div>Bonjour, …</div></div>`;
+  else if(s.kind==='spaces') inner = `<h4>Changer d\u2019espace</h4><p class="tiny" style="margin:0">Seuls les espaces ouverts par vos mandats apparaissent. Pour la démonstration, tous sont affichés.</p><div style="display:flex;flex-direction:column;gap:8px">${spacesList()}</div>`;
   else inner = `<h4>Bulletin d’adhésion</h4><p class="muted" style="margin:0">Dans l’application, ce bouton télécharge le bulletin PDF fourni par le SECAM. Il se remplit et se renvoie à la section.</p>`;
   return `<div class="overlay" data-act="close"><div class="sheet" role="dialog" aria-modal="true"><div class="grab"></div>${inner}
-    <p class="tiny" style="margin:0">Prototype : rien n’est envoyé.</p><button class="btn dark" data-act="close">Fermer</button></div></div>`;
+    ${s.kind==='spaces'?'':'<p class="tiny" style="margin:0">Prototype : rien n\u2019est envoyé.</p>'}<button class="btn dark" data-act="close">Fermer</button></div></div>`;
 }
 
 function render(keepScroll){
@@ -895,6 +916,8 @@ const ACT = {
   call(el){ S.sheet={kind:'call',n:el.dataset.n,tel:el.dataset.tel}; render(true); },
   sms(el){ S.sheet={kind:'sms',n:el.dataset.n,tel:el.dataset.tel}; render(true); },
   bulletin(){ S.sheet={kind:'pdf'}; render(true); },
+  spaces(){ S.sheet={kind:'spaces'}; render(true); },
+  space(el){ S.sheet=null; go(el.dataset.to); },
   close(el, e){ if(e.target!==el) return; S.sheet=null; render(true); },
   subj(el){ S.subjects[el.dataset.k]=!S.subjects[el.dataset.k]; render(true); },
   unlock(el){ S.unlock=el.dataset.k; render(true); },
