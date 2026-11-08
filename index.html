@@ -7,7 +7,7 @@
 <meta name="theme-color" content="#EE7203">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="SECAM Connect">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png">
@@ -1007,7 +1007,7 @@ const h0 = location.hash.slice(1); if(h0 && SCREENS[h0]) go(h0, true); else rend
 
 <script>
 (function(){
-  var CODE = "NAO2026", KEY = 'secam-demo-ok', BUILD = "08/11 12h18";
+  var CODE = "NAO2026", KEY = 'secam-demo-ok', BUILD = "08/11 12h21";
   var gate = document.getElementById('gate'), form = document.getElementById('gateForm'),
       input = document.getElementById('gateCode'), err = document.getElementById('gateErr');
   function ok(){ try { return localStorage.getItem(KEY) === CODE; } catch(e){ return false; } }
@@ -1023,17 +1023,12 @@ const h0 = location.hash.slice(1); if(h0 && SCREENS[h0]) go(h0, true); else rend
   function setOpen(v){ document.body.classList.toggle('demo-open', v); btn.setAttribute('aria-expanded', String(v)); btn.textContent = v ? 'Fermer ✕' : 'Démo ▾'; }
   btn.addEventListener('click', function(){ setOpen(!document.body.classList.contains('demo-open')); });
   pick.addEventListener('change', function(){ setOpen(false); });
-  /* Hauteur réelle de l'écran. Sur iPhone, une fois l'appli installée, iOS annonce une hauteur
-     réduite de la barre d'état : on prend alors la hauteur de l'écran lui-même. */
+  /* Hauteur de l'application : la fenêtre visible. La barre d'état iPhone est opaque
+     (style « default ») : iOS 26 laisse sinon un vide en bas de l'écran avec « black-translucent ». */
   var root = document.documentElement;
-  var isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
   var standalone = window.navigator.standalone === true || (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
   function fit(){
-    var h = Math.max(window.innerHeight, root.clientHeight, window.visualViewport ? Math.round(window.visualViewport.height) : 0);
-    if(isIOS && standalone){
-      var portrait = window.matchMedia('(orientation: portrait)').matches;
-      h = Math.max(h, portrait ? Math.max(screen.height, screen.width) : Math.min(screen.height, screen.width));
-    }
+    var h = window.innerHeight;
     root.style.setProperty('--app-h', h + 'px');
     var d = document.getElementById('demoDiag');
     if(d) d.textContent = 'Version ' + BUILD + ' · écran ' + screen.height + ' · fenêtre ' + window.innerHeight + ' · appli ' + h + (standalone ? ' · installée' : '');
