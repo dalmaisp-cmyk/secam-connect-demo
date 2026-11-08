@@ -1,0 +1,25 @@
+{
+  "name": "SECAM Connect",
+  "short_name": "SECAM Connect",
+  "lang": "fr",
+  "start_url": "/secam-connect-demo/app/",
+  "scope": "/secam-connect-demo/app/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F5F3F0",
+  "theme_color": "#EE7203",
+  "icons": [
+    {
+      "src": "/secam-connect-demo/app/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/secam-connect-demo/app/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
