@@ -455,7 +455,7 @@ const S = {
     {p:'Chloé',n:'Lambert',c:'C',tel:'06 00 00 00 24',w:'il y a 1 mois'},
     {p:'Paul',n:'Vidal',c:'T',tel:'06 00 00 00 25',w:'il y a 2 mois'}
   ],
-  code:'', codeErr:false, admins:[{n:'Martine Roux', d:'12 septembre 2026'}], adm:{addAdmin:false, ent:'Entreprise A', edit:null, add:false, addEnt:false, del:null, arch:false},
+  code:'', codeErr:false, telEdit:false, loginErr:false, admins:[{n:'Martine Roux', d:'12 septembre 2026'}], adm:{addAdmin:false, ent:'Entreprise A', edit:null, add:false, addEnt:false, del:null, arch:false},
   log:[{d:'02/11',who:'Admin SECAM',what:'Entreprise B : Damien Faure nommé représentant syndical (RS)'},{d:'15/10',who:'Admin SECAM',what:'Entreprise C : entreprise ajoutée'},{d:'03/10',who:'Admin SECAM',what:'Entreprise A : fin de mandat de Lucas Fabre mise à jour (juin 2028)'}], q:'', f:'all', sq:'', sf:'all', fiche:2, confirm:false,
   pub:'sondage', aud:'deux',
   pubs:[{k:'Story',t:'Point d’étape NAO',v:81},{k:'Actualité',t:'Compte rendu CSE',v:48},{k:'Sondage',t:'Priorité NAO',v:63}],
@@ -616,9 +616,20 @@ connexion:{n:1,g:'adh',l:'Inscription',r(){
         <label class="check"><input type="checkbox" id="consent" ${S.consent?'checked':''}> J’accepte que le SECAM utilise ces informations pour me contacter. Je peux retirer mon accord à tout moment.</label>
         <button class="btn" type="submit" ${S.consent?'':'disabled'}>Continuer</button>
       </form>
-      <div class="alert">${I.shield}<div>L’inscription se fait une seule fois. Ensuite, l’application s’ouvre avec votre code PIN ou Face ID.</div></div>
+      <div class="alert">${I.shield}<div>L’inscription se fait une seule fois. Ensuite, l’application s’ouvre avec votre code PIN ou Face ID.<br><button class="link" data-go="retour">Déjà inscrit ? Se connecter sur ce téléphone</button></div></div>
       <p class="tiny" style="text-align:center;margin-top:auto">Vos données sont protégées et ne sont jamais transmises à l’employeur.</p>
     </div></div>`;
+}},
+retour:{n:'1 bis',g:'adh',l:'Se connecter (déjà inscrit)',r(){
+  return page(head({eb:'SECAM Connect',t:'Se connecter',back:'connexion',p:'Vous êtes déjà inscrit (nouveau téléphone, application réinstallée…) ? Saisissez les mêmes informations qu’à l’inscription.'}), `
+    <form id="loginform" class="card" style="display:flex;flex-direction:column;gap:10px" novalidate>
+      <div class="two"><div class="field"><label for="rn">Nom</label><input class="inp" id="rn" value="${esc(S.reg.n)}" autocomplete="family-name"></div>
+      <div class="field"><label for="rp">Prénom</label><input class="inp" id="rp" value="${esc(S.reg.p)}" autocomplete="given-name"></div></div>
+      <div class="field"><label for="rt">Téléphone portable</label><input class="inp" id="rt" value="${esc(S.reg.tel)}" inputmode="tel" autocomplete="tel"></div>
+      ${S.loginErr?`<div class="alert" style="border-color:var(--bad);background:var(--badbg)"><div><b>Aucun compte ne correspond.</b> Vérifiez votre nom, votre prénom et votre numéro. Si vous avez changé de numéro, prévenez votre section : un délégué mettra votre compte à jour.<br><button type="button" class="link" data-act="mail" data-s="Changement de numéro de portable – SECAM Connect">Écrire à la section</button></div></div>`:''}
+      <button class="btn" type="submit">Se connecter</button></form>
+    <div class="alert">${I.info}<div>L’accès est donné à partir de votre <b>nom</b>, de votre <b>prénom</b> et de votre <b>numéro de portable</b>. Si vous changez de numéro, prévenez votre section : avec l’ancien numéro, vous ne pourrez plus vous connecter.</div></div>
+    <div class="alert ok">${I.info}<div>Démo : Claire Martin, 06 00 00 00 12.</div></div>`);
 }},
 statut:{n:2,g:'adh',l:'Adhérent ou sympathisant ?',r(){
   return page(head({eb:'Inscription · étape 2',t:'Vous êtes…',back:'connexion',p:'Dites-nous si vous êtes adhérent du SECAM.'}), `
@@ -630,7 +641,7 @@ statut:{n:2,g:'adh',l:'Adhérent ou sympathisant ?',r(){
 bienvenue:{n:3,g:'adh',l:'Bienvenue',r(){
   const ready = !!S.unlock;
   return `<div class="scr"><header class="hd orange" style="padding-top:40px"><span class="eb" style="font-size:.78em">SECAM Connect</span>
-    <h3>Bienvenue ${ME.prenom}, votre accès est ouvert</h3><p>Un délégué a vérifié votre adhésion. Trois étapes pour bien démarrer.</p></header>
+    <h3>${S.via==='retour'?`Bon retour ${ME.prenom}`:`Bienvenue ${ME.prenom}, votre accès est ouvert`}</h3><p>${S.via==='retour'?'Votre compte est retrouvé sur ce téléphone.':'Un délégué a vérifié votre adhésion.'} Trois étapes pour bien démarrer.</p></header>
     <div class="body">
       <div class="card"><div class="lbl">1 · Votre délégué syndical</div><div class="person" style="padding:8px 0 0;border:0"><div class="av">DS</div><div class="who"><b>${(delegs(ENT)[0]||{n:'À désigner'}).n}</b><span>Il ou elle est là pour vous : appel ou SMS en un geste.</span></div></div></div>
       <div class="card"><div class="lbl">2 · Vos sujets</div><div class="chips" style="margin-top:8px">${Object.keys(S.subjects).map(k=>`<button class="chip" data-act="subj" data-k="${k}" aria-pressed="${S.subjects[k]}">${k}</button>`).join('')}</div></div>
@@ -682,6 +693,7 @@ compte:{n:8,g:'adh',l:'Mon compte',adh:1,r(){
     <button class="card storycard" data-act="mail" data-s="Actualiser ma cotisation – ${ME.prenom} ${ME.nom}" data-to="section"><span class="bigicon" style="width:2.4em;height:2.4em">${I.mail}</span><span style="flex:1"><b style="font-size:.92em">Actualiser ma cotisation</b><br><span class="tiny">Ouvre votre messagerie avec un e-mail prêt à envoyer à la section.</span></span>${I.chev.replace('<svg','<svg width="16" height="16"')}</button>
     <div class="card flush">
       <div class="list-row"><label for="col">Mon collège</label><select id="col" class="inp" style="width:auto;padding:5px 6px;font-size:.92em">${Object.entries(COLLEGES).map(([k,v])=>`<option value="${k}" ${S.college===k?'selected':''}>${v}</option>`).join('')}</select></div>
+      <button class="list-row" data-act="mail" data-s="Changement de numéro de portable – ${ME.prenom} ${ME.nom}"><span>Changer de numéro de portable</span><span class="v">Prévenir la section ${I.chev}</span></button>
       <button class="list-row" data-go="icone"><span>Icône de l\u2019application</span><span class="v">${appIcon(S.icon,24)}${I.chev}</span></button>
       <button class="list-row" data-go="rubriques"><span>Mes rubriques et notifications</span><span class="v">${I.chev}</span></button>
       <div class="list-row"><span>Déverrouillage : code PIN ou Face ID</span><span class="pill">Activé</span></div>
@@ -745,14 +757,16 @@ fiche:{n:15,g:'pil',l:'Fiche adhérent',r(){
   return page(head({v:'ink',eb:'Fiche adhérent · confidentielle',t:`${m.n.toUpperCase()} ${m.p}`,back:'adherents'}), `
     <div class="card flush">
       <div class="list-row"><span>Collège</span><b>${COLLEGES[m.c]}</b></div>
-      <div class="list-row"><span>Téléphone</span><b style="color:var(--o-dk)">${m.tel}</b></div>
+      ${S.telEdit?`<form id="telform" class="list-row" style="flex-wrap:wrap" novalidate><label for="nt" style="width:100%">Nouveau numéro de portable</label>
+        <input class="inp" id="nt" value="${m.tel}" inputmode="tel" style="flex:1;min-width:0"><button class="btn sm" type="submit">Enregistrer</button><button type="button" class="btn sm ghost" data-act="telCancel">Annuler</button></form>`
+       :`<div class="list-row"><span>Téléphone</span><span style="display:flex;align-items:center;gap:8px"><b style="color:var(--o-dk);white-space:nowrap">${m.tel}</b><button class="btn sm ghost" data-act="telEdit">Modifier</button></span></div>`}
       <div class="list-row"><span>E-mail</span><b style="color:var(--o-dk);overflow-wrap:anywhere">${m.p.toLowerCase()}.${m.n.toLowerCase()}@exemple.fr</b></div></div>
     <div class="card" style="display:flex;flex-direction:column;gap:10px">
       <div style="display:flex;justify-content:space-between;align-items:center"><b>Accès à l’application</b><span class="pill ${m.r?'bad':''}">${m.r?'Restreint':'Actif'}</span></div>
       ${S.confirm?`<div class="alert"><div>${m.r?`Rétablir l’accès de ${m.p} ${m.n} ?`:`Restreindre l’accès de ${m.p} ${m.n} ? Elle ou il passera automatiquement en mode sympathisant.`}</div></div>
         <div class="two"><button class="btn ghost" data-act="cancel">Annuler</button><button class="btn dark" data-act="restrict" data-id="${m.id}">Confirmer</button></div>`
        :`<button class="btn dark" data-act="ask">${m.r?'Rétablir l’accès':'Restreindre l’accès'}</button>`}
-      <span class="tiny">À utiliser après un signalement du trésorier (hors application). L’adhérent restreint est invité à régulariser auprès de lui.</span></div>`, tabs('pil','adherents'));
+      <span class="tiny">Le numéro de portable sert à la connexion avec le nom et le prénom : mettez-le à jour quand l\u2019adhérent signale un changement de numéro. À utiliser après un signalement du trésorier (hors application). L’adhérent restreint est invité à régulariser auprès de lui.</span></div>`, tabs('pil','adherents'));
 }},
 sympathisants:{n:16,g:'pil',l:'Sympathisants',r(){
   const q=S.sq.trim().toLowerCase();
@@ -893,6 +907,7 @@ function go(id, fromHash){
   if(t.alias){ id = t.alias; t = SCREENS[id]; }
   if(t.adh && (me().r || S.status!=='adh')) id = 'sym-delegues';
   if(id==='annuaire') Object.assign(S.adm,{ent:ENT,edit:null,add:false,del:null,arch:false});
+  if(id!==S.screen){ S.telEdit=false; S.loginErr=false; }
   S.screen = id; S.sheet = null; S.confirm = false;
   if(id!=='story') S.playing = false;
   try{ if(location.hash.slice(1)!==id) history.replaceState(null,'','#'+id); }catch(e){}
@@ -950,6 +965,8 @@ const ACT = {
     const d=new Date(); S.pending.unshift({p:S.reg.p,n:S.reg.n,tel:S.reg.tel,mail:S.reg.mail,d:String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0'),me:true});
     S.status='pending'; go('sym-delegues'); },
   seeRequest(){ go('traiter'); },
+  telEdit(){ S.telEdit=true; render(true); },
+  telCancel(){ S.telEdit=false; render(true); },
   decide(el){ const p=S.pending.splice(+el.dataset.i,1)[0], ok=el.dataset.d==='ok', who=`${p.p} ${p.n}`;
     if(ok){ S.nAdh++; logIt(`${ENT} : ${who} validé comme adhérent`); if(p.me){ S.status='adh'; S.via='ds'; } }
     else { S.syms.unshift({p:p.p,n:p.n,c:'E',tel:p.tel,w:'à l\u2019instant'}); logIt(`${ENT} : demande d\u2019accès adhérent de ${who} refusée (reste sympathisant)`); if(p.me) S.status='sym'; }
@@ -968,6 +985,16 @@ phone.addEventListener('click', e => {
   const a = e.target.closest('[data-act]'); if(a && ACT[a.dataset.act] && !a.disabled){ ACT[a.dataset.act](a, e); }
 });
 phone.addEventListener('submit', e => { e.preventDefault();
+  if(e.target.id==='loginform'){ const v=id=>document.getElementById(id).value.trim();
+    const norm=x=>x.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/\s+/g,' ').trim(), dig=x=>String(x).replace(/\D/g,'');
+    const match=x=>norm(x.n)===norm(v('rn')) && norm(x.p)===norm(v('rp')) && dig(x.tel)===dig(v('rt'));
+    const m=S.members.find(match), y=!m && S.syms.find(match);
+    if(!m && !y){ S.loginErr=true; render(true); return; }
+    S.loginErr=false; const who=m||y; S.reg={n:who.n,p:who.p,tel:who.tel,mail:S.reg.mail}; ME.nom=who.n; ME.prenom=who.p;
+    if(m){ S.status='adh'; S.via='retour'; S.unlock=null; go('bienvenue'); } else { S.status='sym'; go('sym-delegues'); } }
+  if(e.target.id==='telform'){ const m=S.members.find(x=>x.id===S.fiche)||S.members[1], t=document.getElementById('nt').value.trim();
+    if(t.replace(/\D/g,'').length<10){ toast('Indiquez un numéro à 10 chiffres.'); return; }
+    m.tel=t; S.telEdit=false; logIt(`${ENT} : numéro de portable de ${m.p} ${m.n} mis à jour`); toast('Numéro mis à jour. L\u2019adhérent se connecte avec ce nouveau numéro.'); }
   if(e.target.id==='regform'){ const v=id=>document.getElementById(id).value.trim();
     if(!S.consent) return;
     if(!v('ln')||!v('lp')||v('ltel').replace(/\D/g,'').length<10){ toast('Indiquez votre nom, votre prénom et un numéro de portable à 10 chiffres.'); return; }
@@ -1015,7 +1042,7 @@ const h0 = location.hash.slice(1); if(h0 && SCREENS[h0]) go(h0, true); else rend
 
 <script>
 (function(){
-  var CODE = "NAO2026", KEY = 'secam-demo-ok', BUILD = "08/11 13h06";
+  var CODE = "NAO2026", KEY = 'secam-demo-ok', BUILD = "08/11 13h07";
   var gate = document.getElementById('gate'), form = document.getElementById('gateForm'),
       input = document.getElementById('gateCode'), err = document.getElementById('gateErr');
   function ok(){ try { return localStorage.getItem(KEY) === CODE; } catch(e){ return false; } }
