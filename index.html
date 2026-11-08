@@ -271,12 +271,14 @@ button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{ou
 .toast button{background:none;border:0;color:var(--o);font-weight:800;padding:0}
 
 /* ---------- Mode appli (démo installable) ---------- */
-html,body{height:100%}
+html,body{height:100%;background:#FFFFFF}
 body{margin:0;padding:0!important;background:#FFFFFF;overscroll-behavior:none;-webkit-text-size-adjust:100%}
 .wrap{display:block;max-width:none;margin:0;height:100%}
 .stage{position:static;display:block;height:100%}
 .device{position:fixed;top:0;bottom:0;left:0;right:0;width:auto;max-width:520px;height:auto;margin:0 auto;border-radius:0;padding:0;background:none;box-shadow:none}
 @supports (height:100dvh){.device{height:100dvh;bottom:auto}}
+/* iPhone, appli installée : iOS sous-estime la hauteur ; on prend la vraie hauteur de l'écran. */
+html.ios-app .device{height:var(--app-h);bottom:auto}
 .phone{border-radius:0!important}
 .hd{padding-top:calc(16px + env(safe-area-inset-top,0px))}
 .scr > header.hd[style]{padding-top:calc(22px + env(safe-area-inset-top,0px))!important}
@@ -1000,6 +1002,13 @@ const h0 = location.hash.slice(1); if(h0 && SCREENS[h0]) go(h0, true); else rend
   function setOpen(v){ document.body.classList.toggle('demo-open', v); btn.setAttribute('aria-expanded', String(v)); btn.textContent = v ? 'Fermer ✕' : 'Démo ▾'; }
   btn.addEventListener('click', function(){ setOpen(!document.body.classList.contains('demo-open')); });
   pick.addEventListener('change', function(){ setOpen(false); });
+  if(window.navigator.standalone === true){
+    var root = document.documentElement; root.classList.add('ios-app');
+    var fit = function(){ var portrait = window.matchMedia('(orientation: portrait)').matches;
+      var h = portrait ? Math.max(screen.height, screen.width) : Math.min(screen.height, screen.width);
+      root.style.setProperty('--app-h', Math.max(h, window.innerHeight) + 'px'); };
+    fit(); window.addEventListener('resize', fit); window.addEventListener('orientationchange', function(){ setTimeout(fit, 300); });
+  }
   if('serviceWorker' in navigator){ window.addEventListener('load', function(){ navigator.serviceWorker.register('sw.js').catch(function(){}); }); }
 })();
 </script>
