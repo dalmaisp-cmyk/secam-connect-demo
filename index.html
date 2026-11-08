@@ -426,7 +426,9 @@ function delegs(name){
 }
 const gP = e => e.m.find(x=>x.gest==='P'), gS = e => e.m.find(x=>x.gest==='S');
 const govCount = e => (gP(e)?1:0) + (gS(e)?1:0);
-let SG = 'Jean-Pierre Bonnet';
+let SG = null;   /* aucun secrétaire général au démarrage : le porteur du projet l'enregistre */
+const PP = 'Porteur du projet';
+const adminWho = () => SG ? `${SG} (secrétaire général)` : `${PP} (administrateur provisoire)`;
 const soon = fin => fin <= '2027-02';
 const finTxt = fin => { const [y,mo]=fin.split('-'); return ['janv.','févr.','mars','avr.','mai','juin','juil.','août','sept.','oct.','nov.','déc.'][+mo-1]+' '+y; };
 const AGENDA = [
@@ -468,8 +470,8 @@ const S = {
     {p:'Chloé',n:'Lambert',c:'C',tel:'06 00 00 00 24',w:'il y a 1 mois'},
     {p:'Paul',n:'Vidal',c:'T',tel:'06 00 00 00 25',w:'il y a 2 mois'}
   ],
-  code:'', codeErr:false, sgChange:null, sgForm:false, symColl:null, symNew:false, telEdit:false, loginErr:false, admins:[{n:'Martine Roux', d:'12 septembre 2026'}], adm:{addAdmin:false, ent:'Entreprise A', edit:null, add:false, addEnt:false, del:null, arch:false},
-  log:[{d:'02/11',who:'Admin SECAM',what:'Entreprise B : Damien Faure nommé représentant syndical (RS)'},{d:'15/10',who:'Admin SECAM',what:'Entreprise C : entreprise ajoutée'},{d:'03/10',who:'Admin SECAM',what:'Entreprise A : fin de mandat de Lucas Fabre mise à jour (juin 2028)'}], q:'', f:'all', sq:'', sf:'all', fiche:2, confirm:false,
+  code:'', codeErr:false, provisional:true, sgFirst:false, sgChange:null, sgForm:false, symColl:null, symNew:false, telEdit:false, loginErr:false, admins:[], adm:{addAdmin:false, ent:'Entreprise A', edit:null, add:false, addEnt:false, del:null, arch:false},
+  log:[{d:'02/11',who:'Porteur du projet (administrateur provisoire)',what:'Entreprise B : Damien Faure nommé représentant syndical (RS)'},{d:'15/10',who:'Porteur du projet (administrateur provisoire)',what:'Entreprise C : entreprise ajoutée'},{d:'03/10',who:'Porteur du projet (administrateur provisoire)',what:'Entreprise A : fin de mandat de Lucas Fabre mise à jour (juin 2028)'}], q:'', f:'all', sq:'', sf:'all', fiche:2, confirm:false,
   pub:'sondage', aud:'deux',
   pubs:[{k:'Story',t:'Point d’étape NAO',v:81},{k:'Actualité',t:'Compte rendu CSE',v:48},{k:'Sondage',t:'Priorité NAO',v:63}],
   symVote:null, symVoted:false, adhVote:null, adhVoted:false, adhEver:false, symEver:false, adhPrev:null, symPrev:null, consent:false
@@ -874,7 +876,7 @@ admin:{n:23,g:'adm',l:'Entreprises',r(){
   const A=S.adm;
   const list = ENTDATA.filter(e=>!e.arch);
   return page(head({v:'ink',eb:'Administration SECAM',t:'Entreprises',p:'Chaque entreprise a 2 gestionnaires qui tiennent l\u2019annuaire. Les administrateurs du SECAM peuvent reprendre la main.'}).replace('<p>','<p style="color:#C9D2E6">'), `
-    <div class="alert">${I.shield}<div>Connecté : <b>${SG}</b>, secrétaire général du SECAM (administrateur de droit).</div></div>
+    <div class="alert">${I.shield}<div>${SG?`Connecté : <b>${SG}</b>, secrétaire général du SECAM (administrateur de droit).`:`Connecté : <b>${PP}</b>, administrateur provisoire. <button class="link" data-go="admin-admins">Enregistrer le premier secrétaire général</button>`}</div></div>
     ${list.map(e=>{ const ds=e.m.find(x=>x.role==='DS'), rs=e.m.find(x=>x.role==='RS'), el=e.m.filter(x=>x.role==='CT'||x.role==='CS').length, alert=e.m.some(x=>soon(x.fin));
       return `<button class="card" data-act="admEnt" data-k="${esc(e.name)}" style="text-align:left;display:flex;flex-direction:column;gap:4px;color:var(--tx)">
         <span style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b style="font-size:1em">${esc(e.name)}</b>${e.tut?'<span class="pill bad">Repris par le SECAM</span>':govCount(e)<2?`<span class="pill bad">Gouvernance ${govCount(e)}/2</span>`:alert?'<span class="pill bad">Mandats à renouveler</span>':'<span class="pill">À jour</span>'}</span>
@@ -896,8 +898,18 @@ admin:{n:23,g:'adm',l:'Entreprises',r(){
 'admin-admins':{n:26,g:'adm',l:'Administrateurs SECAM',r(){
   return page(head({v:'ink',eb:'Administration SECAM',t:'Administrateurs',p:'Ils peuvent reprendre la main sur la gouvernance de n’importe quelle entreprise.'}).replace('<p>','<p style="color:#C9D2E6">'), `
     <div class="lbl">Administrateur de droit</div>
-    <div class="card flush"><div class="person"><div class="av">SG</div><div class="who"><b>${SG}</b><span>Secrétaire général du SECAM</span></div><span class="pill">De droit</span></div></div>
-    ${S.sgChange?`<div class="card" style="display:flex;flex-direction:column;gap:8px;border-color:var(--o);background:var(--soft)">
+    ${!SG ? (S.sgFirst ? `<form id="sgfirstform" class="card" style="display:flex;flex-direction:column;gap:8px;border-color:var(--o)" novalidate>
+        <b>Enregistrer le premier secrétaire général</b>
+        <div class="two"><div class="field"><label for="fsn">Nom</label><input class="inp" id="fsn" autocomplete="off"></div><div class="field"><label for="fsp">Prénom</label><input class="inp" id="fsp" autocomplete="off"></div></div>
+        <div class="field"><label for="fst">Téléphone portable</label><input class="inp" id="fst" inputmode="tel" placeholder="06 00 00 00 00"></div>
+        <div class="field"><label for="fsd">Date de la décision du conseil syndical</label><input class="inp" id="fsd" type="date" value="2026-11-08"></div>
+        <span class="tiny">Quand il s’inscrira ou se connectera avec exactement ces nom, prénom et numéro, il aura la main sur l’administration. Pas de double validation pour ce premier enregistrement : vous êtes le seul administrateur.</span>
+        <div class="two"><button type="button" class="btn ghost" data-act="sgFirstCancel">Annuler</button><button class="btn" type="submit">Enregistrer</button></div></form>`
+      : `<div class="card" style="display:flex;flex-direction:column;gap:8px;border-color:var(--bad)"><b>Aucun secrétaire général enregistré</b>
+        <span class="small">En tant qu’administrateur provisoire, vous enregistrez le premier secrétaire général d’après la décision du conseil syndical.</span>
+        <button class="btn" data-act="sgFirstOpen">Enregistrer le premier secrétaire général</button></div>`)
+    : `<div class="card flush"><div class="person"><div class="av">SG</div><div class="who"><b>${SG}</b><span>Secrétaire général du SECAM${S.sgTel?` · ${S.sgTel}`:''}</span></div><span class="pill">De droit</span></div></div>`}
+    ${!SG?'':S.sgChange?`<div class="card" style="display:flex;flex-direction:column;gap:8px;border-color:var(--o);background:var(--soft)">
         <b>Changement de secrétaire général en attente</b>
         <span class="small">Nouveau secrétaire général : <b>${esc(S.sgChange.n)}</b> · ${esc(S.sgChange.tel)}<br>Élu le ${esc(S.sgChange.d)} · demandé par ${esc(S.sgChange.by)}</span>
         <span class="tiny">Un <b>second administrateur</b> doit confirmer. La personne qui a fait la demande ne peut pas confirmer elle-même.</span>
@@ -919,8 +931,12 @@ admin:{n:23,g:'adm',l:'Entreprises',r(){
         <div class="field"><label for="ad">Date de la décision du conseil</label><input class="inp" id="ad" type="date" value="2026-11-08"></div>
         <div class="two"><button type="button" class="btn ghost" data-act="admCancel">Annuler</button><button class="btn" type="submit">Enregistrer</button></div></form>`
       :`<button class="btn ghost" data-act="admAddAdmin">+ Enregistrer une désignation du conseil</button>`}
-    <div class="lbl">Administrateur provisoire</div>
-    <div class="card flush"><div class="person"><div class="av">PP</div><div class="who"><b>Porteur du projet SECAM Connect</b><span>Pendant le développement et les tests. Rôle retiré à la mise en service, une fois le secrétaire général enregistré.</span></div><span class="pill" style="background:var(--soft);color:var(--o-dk)">Provisoire</span></div></div>
+    ${S.provisional?`<div class="lbl">Administrateur provisoire</div>
+    <div class="card" style="display:flex;flex-direction:column;gap:8px">
+      <div class="person" style="padding:0;border:0"><div class="av">PP</div><div class="who"><b>${PP} SECAM Connect</b><span>Pendant le développement et les tests.</span></div><span class="pill" style="background:var(--soft);color:var(--o-dk)">Provisoire</span></div>
+      ${SG && S.admins.length>=2 ? `<button class="btn ghost" data-act="ppRemove">Retirer le rôle provisoire (par ${esc(SG)})</button>`
+        : `<span class="tiny">Le secrétaire général pourra retirer ce rôle dès que lui et au moins 2 membres désignés seront en place : ${SG?'secrétaire général ✓':'secrétaire général à enregistrer'} · membres désignés ${Math.min(S.admins.length,2)}/2.</span>`}
+    </div>`:''}
     <div class="alert">${I.info}<div>Le secrétaire général est administrateur de droit. À la mise en service, l’équipe technique l’enregistre d’après la décision du conseil syndical ; c’est la première ligne du journal. Les autres administrateurs sont désignés par le conseil syndical. Prévoyez au moins 2 administrateurs en plus du secrétaire général, pour que la double validation soit toujours possible.</div></div>`, tabs('adm','admin-admins'));
 }},
 'sym-compte':{n:'22 bis',g:'sym',l:'Mon compte (sympathisant)',r(){
@@ -982,13 +998,13 @@ function go(id, fromHash){
   if(t.alias){ id = t.alias; t = SCREENS[id]; }
   if(t.adh && (me().r || S.status!=='adh')) id = 'sym-actu';
   if(id==='annuaire') Object.assign(S.adm,{ent:ENT,edit:null,add:false,del:null,arch:false});
-  if(id!==S.screen){ S.telEdit=false; S.loginErr=false; S.sgForm=false; }
+  if(id!==S.screen){ S.telEdit=false; S.loginErr=false; S.sgForm=false; S.sgFirst=false; }
   S.screen = id; S.sheet = null; S.confirm = false;
   if(id!=='story') S.playing = false;
   try{ if(location.hash.slice(1)!==id) history.replaceState(null,'','#'+id); }catch(e){}
   render(false);
 }
-function logIt(what){ const d=new Date(); S.log.unshift({d:String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0'), who: (SCREENS[S.screen]||{}).g==='pil' ? (()=>{ const r=gP(ent(ENT)); return r?`${r.n} (${r.role})`:'Gestionnaire suppléant'; })() : `${SG} (secrétaire général)`, what}); }
+function logIt(what){ const d=new Date(); S.log.unshift({d:String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0'), who: (SCREENS[S.screen]||{}).g==='pil' ? (()=>{ const r=gP(ent(ENT)); return r?`${r.n} (${r.role})`:'Gestionnaire suppléant'; })() : adminWho(), what}); }
 function toast(t, undo){
   S.toast = {t, undo}; render(true);
   clearTimeout(toastTimer); toastTimer = setTimeout(()=>{ S.toast=null; render(true); }, 3200);
@@ -1031,13 +1047,16 @@ const ACT = {
   admAskDel(el){ const x=ent(S.adm.ent).m[+el.dataset.i]; if(S.screen==='annuaire' && x.gest){ toast('Désignez d\u2019abord un autre gestionnaire suppléant : il faut toujours 2 gestionnaires.'); return; } S.adm.del=+el.dataset.i; render(true); },
   admDel(el){ const e=ent(S.adm.ent), x=e.m.splice(+el.dataset.i,1)[0]; S.adm.del=null; logIt(`${e.name} : ${x.n} retiré (${ROLES[x.role].r})`); toast(`${x.n} retiré de l\u2019annuaire de ${e.name}.`); },
   admGest(el){ const e=ent(S.adm.ent), g=el.dataset.g, x=e.m[+el.dataset.i]; e.m.forEach(y=>{ if(y.gest===g) delete y.gest; }); x.gest=g; logIt(`${e.name} : ${x.n} désigné gestionnaire ${g==='P'?'principal':'suppléant'}`); toast(`${x.n} est maintenant gestionnaire ${g==='P'?'principal':'suppléant'}.`); },
-  admTut(){ const e=ent(S.adm.ent); if(e.tut){ e.tut=null; logIt(`${e.name} : la main est rendue aux gestionnaires`); toast('La main est rendue aux gestionnaires de l’entreprise.'); } else { const d=new Date(); e.tut={who:`${SG}, secrétaire général`, d:d.toLocaleDateString('fr-FR')}; logIt(`${e.name} : le SECAM reprend la main sur la gouvernance`); toast(`Vous avez repris la main sur ${e.name}.`); } },
+  admTut(){ const e=ent(S.adm.ent); if(e.tut){ e.tut=null; logIt(`${e.name} : la main est rendue aux gestionnaires`); toast('La main est rendue aux gestionnaires de l’entreprise.'); } else { const d=new Date(); e.tut={who:adminWho(), d:d.toLocaleDateString('fr-FR')}; logIt(`${e.name} : le SECAM reprend la main sur la gouvernance`); toast(`Vous avez repris la main sur ${e.name}.`); } },
+  sgFirstOpen(){ S.sgFirst=true; render(true); },
+  sgFirstCancel(){ S.sgFirst=false; render(true); },
+  ppRemove(){ S.provisional=false; const d=new Date(); S.log.unshift({d:String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0'), who:`${SG} (secrétaire général)`, what:`Rôle d\u2019administrateur provisoire du ${PP.toLowerCase()} retiré`}); toast('Le rôle provisoire est retiré. Les administrateurs du SECAM ont la main.'); },
   sgFormOpen(){ S.sgForm=true; render(true); },
   sgFormCancel(){ S.sgForm=false; render(true); },
   sgCancel(){ logIt(`Demande de changement de secrétaire général annulée (${S.sgChange.n})`); S.sgChange=null; toast('Demande annulée.'); },
   sgConfirm(el){ const a=S.admins[+el.dataset.i], c=S.sgChange; if(!a||!c) return;
     if(a.n===c.by){ toast('La personne qui a fait la demande ne peut pas confirmer elle-même.'); return; }
-    const old=SG; SG=c.n; S.sgChange=null;
+    const old=SG; SG=c.n; S.sgTel=c.tel; S.sgChange=null;
     const d=new Date(); S.log.unshift({d:String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0'), who:`${a.n} (administrateur)`, what:`Changement de secrétaire général confirmé : ${c.n} remplace ${old} (élu le ${c.d})`});
     toast(`${c.n} est maintenant secrétaire général, administrateur de droit.`); },
   admAddAdmin(){ S.adm.addAdmin=true; render(true); },
@@ -1096,6 +1115,11 @@ phone.addEventListener('submit', e => { e.preventDefault();
     if(S.adm.edit!==null){ if(e2.m[S.adm.edit].gest && (x.role==='DS'||x.role==='RS')) x.gest=e2.m[S.adm.edit].gest; e2.m[S.adm.edit]=x; logIt(`${e2.name} : mandat de ${x.n} modifié (${ROLES[x.role].r}, fin ${finTxt(x.fin)})`); toast('Mandat modifié. L\u2019annuaire est à jour.'); }
     else { e2.m.push(x); logIt(`${e2.name} : ${x.n} ajouté (${ROLES[x.role].r})`); toast(`${x.n} ajouté à l\u2019annuaire de ${e2.name}.`); }
     S.adm.edit=null; S.adm.add=false; render(true); }
+  if(e.target.id==='sgfirstform'){ const v=id=>document.getElementById(id).value.trim();
+    if(!v('fsn')||!v('fsp')||v('fst').replace(/\D/g,'').length<10){ toast('Indiquez le nom, le prénom et un numéro de portable à 10 chiffres.'); return; }
+    const d=v('fsd'), dt=d?new Date(d+'T12:00').toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'}):'';
+    const name=`${v('fsp')} ${v('fsn')}`; logIt(`Premier secrétaire général enregistré : ${name} · ${v('fst')} (décision du conseil du ${dt})`);
+    SG=name; S.sgTel=v('fst'); S.sgFirst=false; toast(`${name} est enregistré comme secrétaire général. Il aura la main dès sa connexion.`); }
   if(e.target.id==='sgform'){ const v=id=>document.getElementById(id).value.trim();
     if(!v('sgn')||v('sgt').replace(/\D/g,'').length<10){ toast('Indiquez le prénom, le nom et un numéro de portable à 10 chiffres.'); return; }
     const d=v('sgd'), dt=d?new Date(d+'T12:00').toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'}):'';
@@ -1137,7 +1161,7 @@ const h0 = location.hash.slice(1); if(h0 && SCREENS[h0]) go(h0, true); else rend
 
 <script>
 (function(){
-  var CODE = "NAO2026", KEY = 'secam-demo-ok', BUILD = "08/11 13h49";
+  var CODE = "NAO2026", KEY = 'secam-demo-ok', BUILD = "08/11 13h54";
   var gate = document.getElementById('gate'), form = document.getElementById('gateForm'),
       input = document.getElementById('gateCode'), err = document.getElementById('gateErr');
   function ok(){ try { return localStorage.getItem(KEY) === CODE; } catch(e){ return false; } }
