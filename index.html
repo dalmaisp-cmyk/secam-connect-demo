@@ -431,6 +431,7 @@ const soon = fin => fin <= '2027-02';
 const finTxt = fin => { const [y,mo]=fin.split('-'); return ['janv.','févr.','mars','avr.','mai','juin','juil.','août','sept.','oct.','nov.','déc.'][+mo-1]+' '+y; };
 const AGENDA = [
   {d:'12',m:'nov.',cat:'Négociation · NAO',t:'Première réunion de négociation des NAO',w:'Direction · 14 h'},
+  {d:'17',m:'nov.',cat:'Tournée syndicale',t:'Tournée des délégués dans les ateliers et les bureaux',w:'Site de production, équipes du matin et d\u2019après-midi · 10 h – 15 h'},
   {d:'19',m:'nov.',cat:'CSE',t:'Réunion ordinaire du CSE',w:'Salle du CSE · 9 h'},
   {d:'26',m:'nov.',cat:'Négociation · télétravail',t:'Accord télétravail : troisième réunion',w:'Direction · 14 h'},
   {d:'01',m:'déc.',cat:'CSSCT',t:'Réunion de la CSSCT (santé, sécurité et conditions de travail)',w:'Salle du CSE · 10 h'}
@@ -689,7 +690,7 @@ story:{n:5,g:'adh',l:'Story',adh:1,r(){
   </div>`;
 }},
 agenda:{n:6,g:'adh',l:'Agenda',adh:1,r(){
-  return page(head({eb:'SECAM · '+ENT,t:'Agenda',p:'Les réunions à venir, pour information : négociations syndicales avec la direction, CSE et CSSCT. Une question sur une réunion ? Écrivez à la section par mail.'}),
+  return page(head({eb:'SECAM · '+ENT,t:'Agenda',p:'Les réunions à venir, pour information : négociations syndicales avec la direction, CSE, CSSCT et tournées syndicales auprès des collaborateurs. Une question sur une réunion ? Écrivez à la section par mail.'}),
     AGENDA.map(e=>`<div class="card event"><div class="date"><b>${e.d}</b><span>${e.m}</span></div><div style="display:flex;flex-direction:column;gap:4px;min-width:0">
       <span class="lbl">${e.cat}</span><b style="font-size:.92em">${e.t}</b><span class="tiny">${e.w}</span>
       <button class="btn ghost sm" style="align-self:flex-start;margin-top:4px" data-act="mail" data-s="${esc(e.t+' – '+e.d+' '+e.m)}">${I.mail}Contacter la section par mail</button></div></div>`).join(''),
@@ -799,7 +800,7 @@ publier:{n:17,g:'pil',l:'Publier',r(){
     info:`<div class="field"><label for="pt">Texte du bandeau</label><input class="inp" id="pt" value="Permanence syndicale vendredi de 12 h à 14 h"></div>`,
     actu:`<div class="field"><label for="pr">Rubrique</label><select class="inp" id="pr"><option>CSE</option><option>NAO</option><option>Actualités du syndicat</option><option>Actualité Cfdt ${ENT}</option><option>Information dialogue social</option></select></div><div class="field"><label for="pt">Titre</label><input class="inp" id="pt" value="Accord télétravail : où en est-on ?"></div>`,
     sondage:`<div class="field"><label for="pt">Question</label><input class="inp" id="pt" value="Êtes-vous favorable à 2 jours de télétravail par semaine ?"></div><div class="two"><input class="inp" aria-label="Choix 1" value="Oui"><input class="inp" aria-label="Choix 2" value="Non"></div>`,
-    reunion:`<div class="field"><label for="pty">Type de réunion</label><select class="inp" id="pty"><option>Négociation syndicale</option><option>CSE</option><option>CSSCT</option></select></div><div class="field"><label for="pt">Intitulé</label><input class="inp" id="pt" value="Réunion de bilan des NAO"></div><div class="two"><input class="inp" aria-label="Date" value="10 déc. · 17 h"><input class="inp" aria-label="Lieu" value="Salle syndicale"></div>`
+    reunion:`<div class="field"><label for="pty">Type de réunion</label><select class="inp" id="pty"><option>Négociation syndicale</option><option>CSE</option><option>CSSCT</option><option>Tournée syndicale</option></select></div><div class="field"><label for="pt">Intitulé</label><input class="inp" id="pt" value="Réunion de bilan des NAO"></div><div class="two"><input class="inp" aria-label="Date" value="10 déc. · 17 h"><input class="inp" aria-label="Lieu" value="Salle syndicale"></div>`
   }[S.pub];
   return page(head({v:'ink',eb:'Espace pilotage DS / RS · '+ENT,t:'Publier',back:'pilotage'}), `
     <span class="muted">Story, info du jour et réunions : adhérents uniquement. Pour une actualité ou un sondage, choisissez le public.</span>
@@ -1058,7 +1059,7 @@ const h0 = location.hash.slice(1); if(h0 && SCREENS[h0]) go(h0, true); else rend
 
 <script>
 (function(){
-  var CODE = "NAO2026", KEY = 'secam-demo-ok', BUILD = "08/11 13h24";
+  var CODE = "NAO2026", KEY = 'secam-demo-ok', BUILD = "08/11 13h28";
   var gate = document.getElementById('gate'), form = document.getElementById('gateForm'),
       input = document.getElementById('gateCode'), err = document.getElementById('gateErr');
   function ok(){ try { return localStorage.getItem(KEY) === CODE; } catch(e){ return false; } }
