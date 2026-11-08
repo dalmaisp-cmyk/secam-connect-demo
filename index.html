@@ -937,7 +937,7 @@ admin:{n:23,g:'adm',l:'Entreprises',r(){
       ${SG && S.admins.length>=2 ? `<button class="btn ghost" data-act="ppRemove">Retirer le rôle provisoire (par ${esc(SG)})</button>`
         : `<span class="tiny">Le secrétaire général pourra retirer ce rôle dès que lui et au moins 2 membres désignés seront en place : ${SG?'secrétaire général ✓':'secrétaire général à enregistrer'} · membres désignés ${Math.min(S.admins.length,2)}/2.</span>`}
     </div>`:''}
-    <div class="alert">${I.info}<div>Le secrétaire général est administrateur de droit. À la mise en service, l’équipe technique l’enregistre d’après la décision du conseil syndical ; c’est la première ligne du journal. Les autres administrateurs sont désignés par le conseil syndical. Prévoyez au moins 2 administrateurs en plus du secrétaire général, pour que la double validation soit toujours possible.</div></div>`, tabs('adm','admin-admins'));
+    <div class="alert">${I.info}<div>Le secrétaire général est administrateur de droit. Le premier est enregistré par l’administrateur provisoire d’après la décision du conseil syndical ; ses successeurs, avec la confirmation d’un second administrateur. Les autres administrateurs sont désignés par le conseil syndical. Prévoyez au moins 2 administrateurs en plus du secrétaire général, pour que la double validation soit toujours possible.</div></div>`, tabs('adm','admin-admins'));
 }},
 'sym-compte':{n:'22 bis',g:'sym',l:'Mon compte (sympathisant)',r(){
   return page(head({eb:symEb(),t:'Mon compte'}), `
