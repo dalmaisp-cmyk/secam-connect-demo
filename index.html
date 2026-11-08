@@ -482,7 +482,7 @@ function head(o){
 }
 const TABS = {
   adh:[['accueil','Accueil',I.home],['agenda','Agenda',I.cal],['delegues','Délégués',I.users],['compte','Mon compte',I.user]],
-  sym:[['sym-delegues','Délégués',I.users],['sym-sondages','Sondages',I.poll],['sym-actu','Actualités',I.news]],
+  sym:[['sym-actu','Actualités',I.news],['sym-sondages','Sondages',I.poll],['sym-delegues','Délégués',I.users]],
   adm:[['admin','Entreprises',I.users],['admin-admins','Administrateurs',I.shield],['admin-journal','Journal',I.news]],
   pil:[['pilotage','Pilotage',I.gauge],['publier','Publier',I.pen],['traiter','À traiter',I.inbox],['adherents','Adhérents',I.users],['annuaire','Annuaire',I.book]]
 };
@@ -551,7 +551,7 @@ function restrictedCard(){
     <span class="tiny">Dès que le trésorier a confirmé la régularisation, votre délégué syndical rétablit votre accès. Vous n’avez rien d’autre à faire.</span>
     <button class="btn ghost" data-act="restore-me">Simuler le rétablissement par le DS →</button></div>`;
 }
-const restrictedNote = () => S.status==='pending' ? `<div class="alert">${I.clock}<div>Votre demande d\u2019accès adhérent est en cours de vérification. <button class="link" data-go="sym-delegues">En savoir plus</button></div></div>` : me().r ? `<div class="alert" style="border-color:var(--bad);background:var(--badbg)">${I.lock}<div>Mode sympathisant : votre accès adhérent est suspendu. <button class="link" data-go="sym-delegues">En savoir plus</button></div></div>` : '';
+const restrictedNote = () => S.status==='pending' ? `<div class="alert">${I.clock}<div>Votre demande d\u2019accès adhérent est en cours de vérification. <button class="link" data-go="sym-actu">En savoir plus</button></div></div>` : me().r ? `<div class="alert" style="border-color:var(--bad);background:var(--badbg)">${I.lock}<div>Mode sympathisant : votre accès adhérent est suspendu. <button class="link" data-go="sym-actu">En savoir plus</button></div></div>` : '';
 const symEb = () => (me().r ? 'Mode sympathisant · ' : S.status==='pending' ? 'Demande en cours · ' : 'Espace sympathisant · ') + ENT;
 function mandatsView(mode){
   const A=S.adm, e=ent(A.ent), pil = mode==='pil';
@@ -726,7 +726,7 @@ rubriques:{n:10,g:'adh',l:'Rubriques et notifications',adh:1,r(){
     R.map(([k,t,d])=>`<div class="card" style="display:flex;align-items:center;gap:10px"><div style="flex:1"><b style="font-size:.92em" id="r-${k}">${t}</b><div class="tiny">${d}</div></div><button class="sw" role="switch" aria-labelledby="r-${k}" aria-checked="${S.rub[k]}" data-act="rub" data-k="${k}"></button></div>`).join(''),
     tabs('adh','compte'));
 }},
-restreint:{n:11,g:'adh',l:'Accès restreint',alias:'sym-delegues',pre(){ me().r=true; }},
+restreint:{n:11,g:'adh',l:'Accès restreint',alias:'sym-actu',pre(){ me().r=true; }},
 
 /* ---------------- Espace pilotage ---------------- */
 pilotage:{n:13,g:'pil',l:'Tableau de bord',r(){
@@ -822,8 +822,12 @@ traiter:{n:18,g:'pil',l:'À traiter',r(){
 }},
 annuaire:{n:'18 bis',g:'pil',l:'Annuaire (gestion par le RS)',r(){ return mandatsView('pil'); }},
 /* ---------------- Parcours sympathisant ---------------- */
-'sym-delegues':{n:20,g:'sym',l:'Délégués',r(){
-  return page(head({eb:symEb(),t:'Vos délégués et élus',p:'Joignez-les directement par appel ou SMS.'}), (me().r?restrictedCard():S.status==='pending'?pendingCard():'')+people(delegs(ENT))+joinCard(), tabs('sym','sym-delegues'));
+'sym-actu':{n:20,g:'sym',l:'Actualités',r(){
+  return page(head({eb:symEb(),t:'Actualités',p:'Les informations que la section partage avec les sympathisants.'}), `${me().r?restrictedCard():S.status==='pending'?pendingCard():''}
+    <div class="card"><div class="lbl">NAO · 2 nov.</div><b style="font-size:.92em">Ce que la CFDT demande cette année</b><p class="muted" style="margin:4px 0 0">Augmentation générale, prime de transport, égalité salariale femmes-hommes.</p></div>
+    ${NAVETTE}
+    <div class="card"><div class="lbl">Information dialogue social · 30 oct.</div><b style="font-size:.92em">Accord télétravail : deuxième réunion de négociation</b><p class="muted" style="margin:4px 0 0">La direction propose 1 jour par semaine. Nous demandons 2 jours et une indemnité.</p></div>
+    <p class="tiny" style="margin:0">Les stories, l’agenda et l’info du jour sont réservés aux adhérents.</p>${joinCard()}`, tabs('sym','sym-actu'));
 }},
 'sym-sondages':{n:21,g:'sym',l:'Sondages',r(){
   return page(head({eb:symEb(),t:'Sondages',p:'Donnez votre avis sur les sujets que porte la section.'}), `${restrictedNote()}
@@ -831,12 +835,8 @@ annuaire:{n:'18 bis',g:'pil',l:'Annuaire (gestion par le RS)',r(){ return mandat
     ${pollCard('sym')}
     <div class="card"><span class="lbl" style="color:var(--sub)">Terminé · 16 oct.</span><br><b style="font-size:.9em">Une navette entre la gare et le site ?</b><div class="tiny" style="margin-top:4px">Résultats publiés dans l\u2019onglet Actualités.</div></div>`, tabs('sym','sym-sondages'));
 }},
-'sym-actu':{n:22,g:'sym',l:'Actualités',r(){
-  return page(head({eb:symEb(),t:'Actualités',p:'Les informations que la section partage avec les sympathisants.'}), `${restrictedNote()}
-    <div class="card"><div class="lbl">NAO · 2 nov.</div><b style="font-size:.92em">Ce que la CFDT demande cette année</b><p class="muted" style="margin:4px 0 0">Augmentation générale, prime de transport, égalité salariale femmes-hommes.</p></div>
-    ${NAVETTE}
-    <div class="card"><div class="lbl">Information dialogue social · 30 oct.</div><b style="font-size:.92em">Accord télétravail : deuxième réunion de négociation</b><p class="muted" style="margin:4px 0 0">La direction propose 1 jour par semaine. Nous demandons 2 jours et une indemnité.</p></div>
-    <p class="tiny" style="margin:0">Les stories, l’agenda et l’info du jour sont réservés aux adhérents.</p>${joinCard()}`, tabs('sym','sym-actu'));
+'sym-delegues':{n:22,g:'sym',l:'Délégués',r(){
+  return page(head({eb:symEb(),t:'Vos délégués et élus',p:'Joignez-les directement par appel ou SMS.'}), restrictedNote()+people(delegs(ENT))+joinCard(), tabs('sym','sym-delegues'));
 }},
 /* ---------------- Administration SECAM ---------------- */
 admin:{n:23,g:'adm',l:'Entreprises',r(){
@@ -910,7 +910,7 @@ function go(id, fromHash){
   let t = SCREENS[id]; if(!t) return;
   if(t.pre) t.pre();
   if(t.alias){ id = t.alias; t = SCREENS[id]; }
-  if(t.adh && (me().r || S.status!=='adh')) id = 'sym-delegues';
+  if(t.adh && (me().r || S.status!=='adh')) id = 'sym-actu';
   if(id==='annuaire') Object.assign(S.adm,{ent:ENT,edit:null,add:false,del:null,arch:false});
   if(id!==S.screen){ S.telEdit=false; S.loginErr=false; }
   S.screen = id; S.sheet = null; S.confirm = false;
@@ -968,7 +968,7 @@ const ACT = {
     S.pending=S.pending.filter(x=>!x.me);
     if(el.dataset.k==='sym'){ S.flow='sym'; S.code=''; S.codeErr=false; go('code-sms'); return; }
     const d=new Date(); S.pending.unshift({p:S.reg.p,n:S.reg.n,tel:S.reg.tel,mail:S.reg.mail,d:String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0'),me:true});
-    S.status='pending'; go('sym-delegues'); },
+    S.status='pending'; go('sym-actu'); },
   seeRequest(){ go('traiter'); },
   telEdit(){ S.telEdit=true; render(true); },
   telCancel(){ S.telEdit=false; render(true); },
@@ -1008,7 +1008,7 @@ phone.addEventListener('submit', e => { e.preventDefault();
     if(!S.consent) return;
     if(!v('ln')||!v('lp')||v('ltel').replace(/\D/g,'').length<10){ toast('Indiquez votre nom, votre prénom et un numéro de portable à 10 chiffres.'); return; }
     S.reg={n:v('ln'),p:v('lp'),tel:v('ltel'),mail:v('lmail')}; ME.nom=S.reg.n; ME.prenom=S.reg.p; go('statut'); }
-  if(e.target.id==='codeform'){ if(S.code.replace(/\D/g,'')==='482917'){ S.codeErr=false; if(S.flow==='retour'){ S.flow=null; if(S.retourAdh){ S.status='adh'; S.via='retour'; S.unlock=null; go('bienvenue'); } else { S.status='sym'; go('sym-delegues'); } return; } S.status='sym'; S.syms.unshift({p:S.reg.p,n:S.reg.n,c:'E',tel:S.reg.tel,w:'à l\u2019instant'}); go('sym-delegues'); } else { S.codeErr=true; render(true); } }
+  if(e.target.id==='codeform'){ if(S.code.replace(/\D/g,'')==='482917'){ S.codeErr=false; if(S.flow==='retour'){ S.flow=null; if(S.retourAdh){ S.status='adh'; S.via='retour'; S.unlock=null; go('bienvenue'); } else { S.status='sym'; go('sym-actu'); } return; } S.status='sym'; S.syms.unshift({p:S.reg.p,n:S.reg.n,c:'E',tel:S.reg.tel,w:'à l\u2019instant'}); go('sym-actu'); } else { S.codeErr=true; render(true); } }
   if(e.target.id==='mform'){ const v=id=>document.getElementById(id).value.trim(); const e2=ent(S.adm.ent);
     const x={role:v('mr'),n:v('mn'),tel:v('mt'),fin:v('mf')||'2030-06'};
     if(!x.n){ toast('Indiquez le prénom et le nom.'); return; }
@@ -1051,7 +1051,7 @@ const h0 = location.hash.slice(1); if(h0 && SCREENS[h0]) go(h0, true); else rend
 
 <script>
 (function(){
-  var CODE = "NAO2026", KEY = 'secam-demo-ok', BUILD = "08/11 13h12";
+  var CODE = "NAO2026", KEY = 'secam-demo-ok', BUILD = "08/11 13h13";
   var gate = document.getElementById('gate'), form = document.getElementById('gateForm'),
       input = document.getElementById('gateCode'), err = document.getElementById('gateErr');
   function ok(){ try { return localStorage.getItem(KEY) === CODE; } catch(e){ return false; } }
