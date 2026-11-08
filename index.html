@@ -517,7 +517,7 @@ const NAVETTE = `<div class="card"><div class="lbl">Résultats du sondage · 16 
   <div class="res"><div><div class="l"><span>Oui</span><b>72 %</b></div><div class="bar"><i style="width:72%"></i></div></div><div><div class="l"><span>Non</span><b>28 %</b></div><div class="bar"><i style="width:28%"></i></div></div></div></div>`;
 function codeScreen(){
   const d = S.reg.tel.replace(/\D/g,''), tel = d.length>=4 ? d.slice(0,2)+' •• •• •• '+d.slice(-2) : S.reg.tel;
-  return page(head({eb:'Inscription · étape 2 sur 3', t:'Vérification par SMS', back:'connexion'}), `
+  return page(head({eb:S.flow==='retour'?'Nouveau téléphone':'Inscription · étape 2 sur 3', t:'Vérification par SMS', back:S.flow==='retour'?'nouveau-tel':'connexion'}), `
     <div class="center" style="padding-top:6px"><div class="bigicon">${I.sms}</div>
     <b style="font-size:1.1em">Saisissez le code reçu par SMS</b>
     <span class="muted">Nous avons envoyé un code à 6 chiffres au <b>${tel}</b>. Il est valable 10 minutes.</span></div>
@@ -528,7 +528,7 @@ function codeScreen(){
       <button class="btn" type="submit" ${S.code.replace(/\D/g,'').length===6?'':'disabled'}>Valider le code</button>
     </form>
     <div class="center"><span class="muted">Vous n’avez rien reçu ?</span><button class="link" data-act="resend">Renvoyer le code</button></div>
-    <div class="alert">${I.info}<div>Ce code n\u2019est demandé qu\u2019une fois, à l\u2019inscription. Prototype : le code de démonstration est <b>482 917</b>.</div></div>`);
+    <div class="alert">${I.info}<div>Ce code est demandé à l\u2019inscription et à chaque changement de téléphone. Prototype : le code de démonstration est <b>482 917</b>.</div></div>`);
 }
 const pilotName = () => { const r = gP(ent(ENT)); return r ? r.n : 'Le délégué'; };
 const known = tel => S.members.some(m => m.tel.replace(/\D/g,'') === String(tel).replace(/\D/g,''));
@@ -616,12 +616,20 @@ connexion:{n:1,g:'adh',l:'Inscription',r(){
         <label class="check"><input type="checkbox" id="consent" ${S.consent?'checked':''}> J’accepte que le SECAM utilise ces informations pour me contacter. Je peux retirer mon accord à tout moment.</label>
         <button class="btn" type="submit" ${S.consent?'':'disabled'}>Recevoir le code par SMS</button>
       </form>
-      <div class="alert">${I.shield}<div>L’inscription se fait une seule fois. Ensuite, l’application s’ouvre avec votre code PIN ou Face ID.</div></div>
+      <div class="alert">${I.shield}<div>L’inscription se fait une seule fois. Ensuite, l’application s’ouvre avec votre code PIN ou Face ID.<br><button class="link" data-act="newPhone">Déjà inscrit ? Nouveau téléphone</button></div></div>
       <div class="alert ok">${I.info}<div>Démo : avec le <b>06 00 00 00 12</b> (Claire Martin), vous êtes reconnue comme adhérente. Avec un autre numéro, la demande part en vérification auprès des délégués.</div></div>
       <p class="tiny" style="text-align:center;margin-top:auto">Vos données sont protégées et ne sont jamais transmises à l’employeur.</p>
     </div></div>`;
 }},
 'code-sms':{n:'1 bis',g:'adh',l:'Code SMS',r(){ return codeScreen(); }},
+'nouveau-tel':{n:'1 ter',g:'adh',l:'Nouveau téléphone',r(){
+  return page(head({eb:'SECAM Connect',t:'Nouveau téléphone',back:'connexion',p:'Vous étiez déjà inscrit sur un autre téléphone ? Confirmez votre numéro par SMS pour retrouver votre compte.'}), `
+    <form id="phoneform" class="card" style="display:flex;flex-direction:column;gap:10px" novalidate>
+      <div class="field"><label for="ntel">Téléphone portable</label><input class="inp" id="ntel" value="${esc(S.reg.tel)}" inputmode="tel" autocomplete="tel"><span class="tiny">Le numéro utilisé lors de votre inscription.</span></div>
+      <button class="btn" type="submit">Recevoir le code par SMS</button></form>
+    <div class="alert">${I.shield}<div>Pour votre sécurité, le code SMS est redemandé à chaque changement de téléphone. Vous choisirez ensuite un nouveau code PIN ou Face ID.</div></div>
+    <div class="alert">${I.info}<div>Vous avez aussi changé de numéro ? Contactez un délégué de votre entreprise : il mettra votre compte à jour.</div></div>`);
+}},
 statut:{n:2,g:'adh',l:'Adhérent ou sympathisant ?',r(){
   return page(head({eb:'Inscription · étape 3 sur 3',t:'Vous êtes…',back:'code-sms',p:'Votre portable est confirmé. Dites-nous si vous êtes adhérent du SECAM.'}), `
     <button class="space" data-act="choose" data-k="adh"><span class="ic">${I.shield}</span><span style="flex:1;min-width:0"><b style="display:block">Je suis adhérent</b><span class="tiny">Je cotise au SECAM. Si mon portable figure dans le fichier des adhérents de la section, j’accède tout de suite à l’espace adhérent ; sinon un délégué vérifie.</span></span>${I.chev.replace('<svg','<svg width="16" height="16"')}</button>
@@ -631,7 +639,7 @@ statut:{n:2,g:'adh',l:'Adhérent ou sympathisant ?',r(){
 bienvenue:{n:3,g:'adh',l:'Bienvenue',r(){
   const ready = !!S.unlock;
   return `<div class="scr"><header class="hd orange" style="padding-top:40px"><span class="eb" style="font-size:.78em">SECAM Connect</span>
-    <h3>Bienvenue ${ME.prenom}, votre accès est ouvert</h3><p>${S.via==='ds'?'Un délégué a confirmé votre adhésion.':'Votre portable figure dans le fichier des adhérents de la section.'} Trois étapes pour bien démarrer.</p></header>
+    <h3>${S.via==='retour'?`Bon retour ${ME.prenom}`:`Bienvenue ${ME.prenom}, votre accès est ouvert`}</h3><p>${S.via==='retour'?'Votre compte est retrouvé sur ce nouveau téléphone.':S.via==='ds'?'Un délégué a confirmé votre adhésion.':'Votre portable figure dans le fichier des adhérents de la section.'} Trois étapes pour bien démarrer.</p></header>
     <div class="body">
       <div class="card"><div class="lbl">1 · Votre délégué syndical</div><div class="person" style="padding:8px 0 0;border:0"><div class="av">DS</div><div class="who"><b>${(delegs(ENT)[0]||{n:'À désigner'}).n}</b><span>Il ou elle est là pour vous : appel ou SMS en un geste.</span></div></div></div>
       <div class="card"><div class="lbl">2 · Vos sujets</div><div class="chips" style="margin-top:8px">${Object.keys(S.subjects).map(k=>`<button class="chip" data-act="subj" data-k="${k}" aria-pressed="${S.subjects[k]}">${k}</button>`).join('')}</div></div>
@@ -952,6 +960,7 @@ const ACT = {
     const d=new Date(); S.pending.unshift({p:S.reg.p,n:S.reg.n,tel:S.reg.tel,mail:S.reg.mail,d:String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0'),me:true});
     S.status='pending'; go('sym-delegues'); },
   seeRequest(){ go('traiter'); },
+  newPhone(){ S.flow='retour'; go('nouveau-tel'); },
   decide(el){ const p=S.pending.splice(+el.dataset.i,1)[0], ok=el.dataset.d==='ok', who=`${p.p} ${p.n}`;
     if(ok){ S.nAdh++; logIt(`${ENT} : ${who} validé comme adhérent`); if(p.me){ S.status='adh'; S.via='ds'; } }
     else { S.syms.unshift({p:p.p,n:p.n,c:'E',tel:p.tel,w:'à l\u2019instant'}); logIt(`${ENT} : demande d\u2019accès adhérent de ${who} refusée (reste sympathisant)`); if(p.me) S.status='sym'; }
@@ -970,11 +979,14 @@ phone.addEventListener('click', e => {
   const a = e.target.closest('[data-act]'); if(a && ACT[a.dataset.act] && !a.disabled){ ACT[a.dataset.act](a, e); }
 });
 phone.addEventListener('submit', e => { e.preventDefault();
-  if(e.target.id==='regform'){ const v=id=>document.getElementById(id).value.trim();
+  if(e.target.id==='phoneform'){ const t=document.getElementById('ntel').value.trim();
+    if(!known(t)){ toast('Ce numéro n\u2019est lié à aucun compte. Inscrivez-vous ou contactez un délégué.'); return; }
+    S.reg.tel=t; S.flow='retour'; S.code=''; S.codeErr=false; go('code-sms'); }
+  if(e.target.id==='regform'){ S.flow='reg'; const v=id=>document.getElementById(id).value.trim();
     if(!S.consent) return;
     if(!v('ln')||!v('lp')||v('ltel').replace(/\D/g,'').length<10){ toast('Indiquez votre nom, votre prénom et un numéro de portable à 10 chiffres.'); return; }
     S.reg={n:v('ln'),p:v('lp'),tel:v('ltel'),mail:v('lmail')}; ME.nom=S.reg.n; ME.prenom=S.reg.p; S.code=''; S.codeErr=false; go('code-sms'); }
-  if(e.target.id==='codeform'){ if(S.code.replace(/\D/g,'')==='482917'){ S.codeErr=false; go('statut'); } else { S.codeErr=true; render(true); } }
+  if(e.target.id==='codeform'){ if(S.code.replace(/\D/g,'')==='482917'){ S.codeErr=false; if(S.flow==='retour'){ S.status='adh'; S.via='retour'; S.unlock=null; go('bienvenue'); } else go('statut'); } else { S.codeErr=true; render(true); } }
   if(e.target.id==='mform'){ const v=id=>document.getElementById(id).value.trim(); const e2=ent(S.adm.ent);
     const x={role:v('mr'),n:v('mn'),tel:v('mt'),fin:v('mf')||'2030-06'};
     if(!x.n){ toast('Indiquez le prénom et le nom.'); return; }
@@ -1017,7 +1029,7 @@ const h0 = location.hash.slice(1); if(h0 && SCREENS[h0]) go(h0, true); else rend
 
 <script>
 (function(){
-  var CODE = "NAO2026", KEY = 'secam-demo-ok', BUILD = "08/11 13h00";
+  var CODE = "NAO2026", KEY = 'secam-demo-ok', BUILD = "08/11 13h02";
   var gate = document.getElementById('gate'), form = document.getElementById('gateForm'),
       input = document.getElementById('gateCode'), err = document.getElementById('gateErr');
   function ok(){ try { return localStorage.getItem(KEY) === CODE; } catch(e){ return false; } }
