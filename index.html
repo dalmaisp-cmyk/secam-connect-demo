@@ -481,7 +481,7 @@ function head(o){
 }
 const TABS = {
   adh:[['accueil','Accueil',I.home],['agenda','Agenda',I.cal],['delegues','Délégués',I.users],['compte','Mon compte',I.user]],
-  sym:[['sym-delegues','Délégués',I.users],['sym-sondages','Sondages',I.poll],['sym-actu','Actu',I.news]],
+  sym:[['sym-delegues','Délégués',I.users],['sym-sondages','Sondages',I.poll],['sym-actu','Actualités',I.news]],
   adm:[['admin','Entreprises',I.users],['admin-admins','Administrateurs',I.shield],['admin-journal','Journal',I.news]],
   pil:[['pilotage','Pilotage',I.gauge],['publier','Publier',I.pen],['traiter','À traiter',I.inbox],['adherents','Adhérents',I.users],['annuaire','Annuaire',I.book]]
 };
@@ -503,7 +503,7 @@ function people(list, mailBtn){
 }
 function pollCard(who){
   const v = who==='adh' ? S.adhVote : S.symVote, done = who==='adh' ? S.adhVoted : S.symVoted;
-  const where = who==='adh' ? 'sur l\u2019accueil' : 'dans l\u2019onglet Actu';
+  const where = who==='adh' ? 'sur l\u2019accueil' : 'dans l\u2019onglet Actualités';
   return `<div class="card" style="display:flex;flex-direction:column;gap:8px">
     <div style="display:flex;justify-content:space-between"><span class="lbl">Sondage en cours · jusqu\u2019au 20 nov.</span><span class="pill">Anonyme</span></div>
     <b>${POLL.q}</b>
@@ -814,10 +814,10 @@ annuaire:{n:'18 bis',g:'pil',l:'Annuaire (gestion par le RS)',r(){ return mandat
   return page(head({eb:symEb(),t:'Sondages',p:'Donnez votre avis sur les sujets que porte la section.'}), `${restrictedNote()}
     <div class="alert ok">${I.lock}<div><b>Vote anonyme.</b> Votre réponse n’est jamais rattachée à votre nom, y compris pour les délégués.</div></div>
     ${pollCard('sym')}
-    <div class="card"><span class="lbl" style="color:var(--sub)">Terminé · 16 oct.</span><br><b style="font-size:.9em">Une navette entre la gare et le site ?</b><div class="tiny" style="margin-top:4px">Résultats publiés dans l\u2019onglet Actu.</div></div>`, tabs('sym','sym-sondages'));
+    <div class="card"><span class="lbl" style="color:var(--sub)">Terminé · 16 oct.</span><br><b style="font-size:.9em">Une navette entre la gare et le site ?</b><div class="tiny" style="margin-top:4px">Résultats publiés dans l\u2019onglet Actualités.</div></div>`, tabs('sym','sym-sondages'));
 }},
-'sym-actu':{n:22,g:'sym',l:'Actu',r(){
-  return page(head({eb:symEb(),t:'Actu',p:'Les informations que la section partage avec les sympathisants.'}), `${restrictedNote()}
+'sym-actu':{n:22,g:'sym',l:'Actualités',r(){
+  return page(head({eb:symEb(),t:'Actualités',p:'Les informations que la section partage avec les sympathisants.'}), `${restrictedNote()}
     <div class="card"><div class="lbl">NAO · 2 nov.</div><b style="font-size:.92em">Ce que la CFDT demande cette année</b><p class="muted" style="margin:4px 0 0">Augmentation générale, prime de transport, égalité salariale femmes-hommes.</p></div>
     ${NAVETTE}
     <div class="card"><div class="lbl">Information dialogue social · 30 oct.</div><b style="font-size:.92em">Accord télétravail : deuxième réunion de négociation</b><p class="muted" style="margin:4px 0 0">La direction propose 1 jour par semaine. Nous demandons 2 jours et une indemnité.</p></div>
@@ -1007,7 +1007,7 @@ const h0 = location.hash.slice(1); if(h0 && SCREENS[h0]) go(h0, true); else rend
 
 <script>
 (function(){
-  var CODE = "NAO2026", KEY = 'secam-demo-ok', BUILD = "08/11 12h43";
+  var CODE = "NAO2026", KEY = 'secam-demo-ok', BUILD = "08/11 12h50";
   var gate = document.getElementById('gate'), form = document.getElementById('gateForm'),
       input = document.getElementById('gateCode'), err = document.getElementById('gateErr');
   function ok(){ try { return localStorage.getItem(KEY) === CODE; } catch(e){ return false; } }
