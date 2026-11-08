@@ -435,7 +435,7 @@ const S = {
   screen:'connexion', dark:false, large:false, sheet:null, toast:null,
   college:'T', rub:{cse:true,nao:true,synd:true,actions:false,ent:true,story:true},
   subjects:{CSE:true,NAO:true,'Actualités':true,[`Actualité Cfdt ${ENT}`]:false,'Dialogue social':true}, unlock:null,
-  liked:false, playing:false, icon:'orange',
+  liked:false, playing:false, icon:'blanche',
   members:[
     {id:1,p:'Karim',n:'Benali',c:'T',tel:'06 00 00 00 11',r:false},
     {id:2,p:'Claire',n:'Martin',c:'T',tel:'06 00 00 00 12',r:false,me:true},
@@ -700,7 +700,7 @@ icone:{n:'8 bis',g:'adh',l:'Icône de l’application',adh:1,r(){
       ${appIcon(k,56)}<span style="flex:1;min-width:0"><b style="display:block">${t}</b><span class="tiny">${d}</span></span><span class="rd"></span></button>`).join('')}</div>
     <div class="card" style="display:flex;align-items:center;gap:14px;justify-content:center;background:#2B2F3A;border-color:#2B2F3A">
       ${['noire','orange','blanche'].map(k=>`<div style="display:flex;flex-direction:column;align-items:center;gap:4px;opacity:${S.icon===k?1:.45}">${appIcon(k,48)}<span style="font-size:.66em;color:#fff">SECAM Connect</span></div>`).join('')}</div>
-    <div class="alert">${I.info}<div>Dans l’application publiée sur l’App Store et Google Play, l’icône change aussitôt sur l’écran d’accueil. Dans la version web installable, une seule icône est possible : l’orange.</div></div>`, tabs('adh','compte'));
+    <div class="alert">${I.info}<div>Dans l’application publiée sur l’App Store et Google Play, l’icône change aussitôt sur l’écran d’accueil. Dans la version web installable, une seule icône est possible : la blanche.</div></div>`, tabs('adh','compte'));
 }},
 rubriques:{n:10,g:'adh',l:'Rubriques et notifications',adh:1,r(){
   const R=[['cse','CSE','Comptes rendus, élections, activités'],['nao','NAO','Négociations annuelles obligatoires'],['synd','Actualités du syndicat','Informations générales du SECAM'],['actions',`Actualité Cfdt ${ENT}`,`Les informations de la section CFDT chez ${ENT}`],['ent','Information dialogue social','Négociations, accords et instances représentatives'],['story','Story de la section','Prévenu à chaque nouvelle story']];
