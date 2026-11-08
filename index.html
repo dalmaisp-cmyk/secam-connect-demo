@@ -282,10 +282,7 @@ html,body{height:100%;background:#FFFFFF}
 body{margin:0;padding:0!important;background:#FFFFFF;overscroll-behavior:none;-webkit-text-size-adjust:100%}
 .wrap{display:block;max-width:none;margin:0;height:100%}
 .stage{position:static;display:block;height:100%}
-.device{position:fixed;top:0;bottom:0;left:0;right:0;width:auto;max-width:520px;height:auto;margin:0 auto;border-radius:0;padding:0;background:none;box-shadow:none}
-@supports (height:100dvh){.device{height:100dvh;bottom:auto}}
-/* iPhone, appli installée : iOS sous-estime la hauteur ; on prend la vraie hauteur de l'écran. */
-html.ios-app .device{height:var(--app-h);bottom:auto}
+.device{position:fixed;top:0;left:0;right:0;bottom:auto;width:auto;max-width:520px;height:var(--app-h,100vh);margin:0 auto;border-radius:0;padding:0;background:none;box-shadow:none}
 .phone{border-radius:0!important}
 .hd{padding-top:calc(16px + env(safe-area-inset-top,0px))}
 .scr > header.hd[style]{padding-top:calc(22px + env(safe-area-inset-top,0px))!important}
@@ -343,6 +340,7 @@ body.demo-open .guide{display:flex}
     </div>
     <p class="lede">Les écrans du projet, reliés entre eux. Naviguez dans le téléphone comme dans la vraie application, ou sautez directement à un écran ci-dessous. Les boutons d'appel, de SMS et d'e-mail montrent ce que le téléphone ouvrirait.</p>
     <p class="demo-tip">Changez de profil ou d'écran : adhérent, pilotage DS / RS, sympathisant, administration SECAM. Le code SMS de démonstration est 482 917.</p>
+    <p class="demo-tip" id="demoDiag" style="font-size:.7rem;opacity:.75"></p>
     <div class="picker">
       <label for="pick">Aller à l'écran</label>
       <select id="pick"></select>
@@ -1009,7 +1007,7 @@ const h0 = location.hash.slice(1); if(h0 && SCREENS[h0]) go(h0, true); else rend
 
 <script>
 (function(){
-  var CODE = "NAO2026", KEY = 'secam-demo-ok';
+  var CODE = "NAO2026", KEY = 'secam-demo-ok', BUILD = "08/11 12h18";
   var gate = document.getElementById('gate'), form = document.getElementById('gateForm'),
       input = document.getElementById('gateCode'), err = document.getElementById('gateErr');
   function ok(){ try { return localStorage.getItem(KEY) === CODE; } catch(e){ return false; } }
@@ -1025,13 +1023,23 @@ const h0 = location.hash.slice(1); if(h0 && SCREENS[h0]) go(h0, true); else rend
   function setOpen(v){ document.body.classList.toggle('demo-open', v); btn.setAttribute('aria-expanded', String(v)); btn.textContent = v ? 'Fermer ✕' : 'Démo ▾'; }
   btn.addEventListener('click', function(){ setOpen(!document.body.classList.contains('demo-open')); });
   pick.addEventListener('change', function(){ setOpen(false); });
-  if(window.navigator.standalone === true){
-    var root = document.documentElement; root.classList.add('ios-app');
-    var fit = function(){ var portrait = window.matchMedia('(orientation: portrait)').matches;
-      var h = portrait ? Math.max(screen.height, screen.width) : Math.min(screen.height, screen.width);
-      root.style.setProperty('--app-h', Math.max(h, window.innerHeight) + 'px'); };
-    fit(); window.addEventListener('resize', fit); window.addEventListener('orientationchange', function(){ setTimeout(fit, 300); });
+  /* Hauteur réelle de l'écran. Sur iPhone, une fois l'appli installée, iOS annonce une hauteur
+     réduite de la barre d'état : on prend alors la hauteur de l'écran lui-même. */
+  var root = document.documentElement;
+  var isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  var standalone = window.navigator.standalone === true || (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
+  function fit(){
+    var h = Math.max(window.innerHeight, root.clientHeight, window.visualViewport ? Math.round(window.visualViewport.height) : 0);
+    if(isIOS && standalone){
+      var portrait = window.matchMedia('(orientation: portrait)').matches;
+      h = Math.max(h, portrait ? Math.max(screen.height, screen.width) : Math.min(screen.height, screen.width));
+    }
+    root.style.setProperty('--app-h', h + 'px');
+    var d = document.getElementById('demoDiag');
+    if(d) d.textContent = 'Version ' + BUILD + ' · écran ' + screen.height + ' · fenêtre ' + window.innerHeight + ' · appli ' + h + (standalone ? ' · installée' : '');
   }
+  fit(); window.addEventListener('resize', fit); window.addEventListener('orientationchange', function(){ setTimeout(fit, 300); });
+  if(window.visualViewport) window.visualViewport.addEventListener('resize', fit);
   if('serviceWorker' in navigator){ window.addEventListener('load', function(){ navigator.serviceWorker.register('sw.js').catch(function(){}); }); }
 })();
 </script>
