@@ -947,6 +947,14 @@ function render(keepScroll){
   if(active && (active==='q'||active==='sq'||active==='code')){ const el=document.getElementById(active); if(el){el.focus(); el.setSelectionRange(el.value.length, el.value.length);} }
   document.querySelectorAll('#groups button').forEach(b => b.setAttribute('aria-current', String(b.dataset.s===S.screen || (b.dataset.s==='sombre'&&S.screen==='compte'&&S.dark))));
   document.getElementById('pick').value = S.screen==='compte'&&S.dark ? 'sombre' : S.screen;
+  /* Couleur de la barre d'état du téléphone (appli installée) : celle de l'en-tête de l'écran. */
+  try {
+    const top = phone.querySelector('.hd, .story');
+    const col = getComputedStyle(top || phone).backgroundColor;
+    let meta = document.querySelector('meta[name="theme-color"]');
+    if(!meta){ meta = document.createElement('meta'); meta.name = 'theme-color'; document.head.appendChild(meta); }
+    if(meta.content !== col) meta.content = col;
+  } catch(e){}
 }
 
 function go(id, fromHash){
@@ -1098,7 +1106,7 @@ const h0 = location.hash.slice(1); if(h0 && SCREENS[h0]) go(h0, true); else rend
 
 <script>
 (function(){
-  var CODE = "NAO2026", KEY = 'secam-demo-ok', BUILD = "08/11 13h35";
+  var CODE = "NAO2026", KEY = 'secam-demo-ok', BUILD = "08/11 13h37";
   var gate = document.getElementById('gate'), form = document.getElementById('gateForm'),
       input = document.getElementById('gateCode'), err = document.getElementById('gateErr');
   function ok(){ try { return localStorage.getItem(KEY) === CODE; } catch(e){ return false; } }
