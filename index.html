@@ -459,7 +459,7 @@ const S = {
   log:[{d:'02/11',who:'Admin SECAM',what:'Entreprise B : Damien Faure nommé représentant syndical (RS)'},{d:'15/10',who:'Admin SECAM',what:'Entreprise C : entreprise ajoutée'},{d:'03/10',who:'Admin SECAM',what:'Entreprise A : fin de mandat de Lucas Fabre mise à jour (juin 2028)'}], q:'', f:'all', sq:'', sf:'all', fiche:2, confirm:false,
   pub:'sondage', aud:'deux',
   pubs:[{k:'Story',t:'Point d’étape NAO',v:81},{k:'Actualité',t:'Compte rendu CSE',v:48},{k:'Sondage',t:'Priorité NAO',v:63}],
-  symVote:null, symVoted:false, adhVote:null, adhVoted:false, consent:false
+  symVote:null, symVoted:false, adhVote:null, adhVoted:false, adhEver:false, symEver:false, adhPrev:null, symPrev:null, consent:false
 };
 
 const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -504,14 +504,18 @@ function people(list, mailBtn){
 }
 function pollCard(who){
   const v = who==='adh' ? S.adhVote : S.symVote, done = who==='adh' ? S.adhVoted : S.symVoted;
-  const where = who==='adh' ? 'sur l\u2019accueil' : 'dans l\u2019onglet Actualités';
+  const ever = who==='adh' ? S.adhEver : S.symEver, prev = who==='adh' ? S.adhPrev : S.symPrev;
+  const where = who==='adh' ? 'sur l’accueil' : 'dans l’onglet Actualités';
   return `<div class="card" style="display:flex;flex-direction:column;gap:8px">
-    <div style="display:flex;justify-content:space-between"><span class="lbl">Sondage en cours · jusqu\u2019au 20 nov.</span><span class="pill">Anonyme</span></div>
+    <div style="display:flex;justify-content:space-between"><span class="lbl">Sondage en cours · jusqu’au 20 nov.</span><span class="pill">Anonyme</span></div>
     <b>${POLL.q}</b>
-    ${done?`<div class="alert ok">${I.check}<div>Vous avez voté. Merci ! Les résultats seront publiés ${where} à la clôture.</div></div>`:
-    `<div role="radiogroup" aria-label="${POLL.q}" style="display:flex;flex-direction:column;gap:6px">${POLL.opts.map((o,i)=>`<button class="opt" role="radio" aria-checked="${v===i}" data-act="vote" data-w="${who}" data-i="${i}"><span class="rd"></span>${o}</button>`).join('')}</div>
-    <button class="btn dark" data-act="votesubmit" data-w="${who}" ${v===null?'disabled':''}>Valider mon vote</button>
-    ${who==='adh'?'<span class="tiny">Votre réponse n\u2019est jamais rattachée à votre nom, y compris pour les délégués.</span>':''}`}</div>`;
+    ${done?`<div class="alert ok">${I.check}<div>Vous avez voté <b>« ${POLL.opts[v]} »</b>. Merci ! Les résultats seront publiés ${where} à la clôture.</div></div>
+      <button class="btn ghost" data-act="revote" data-w="${who}">Changer mon vote</button>
+      <span class="tiny">Vous pouvez changer d’avis jusqu’à la clôture du sondage, le 20 novembre. Seul votre dernier choix compte.</span>`:
+    `<div role="radiogroup" aria-label="${POLL.q}" style="display:flex;flex-direction:column;gap:6px">${POLL.opts.map((o,i)=>`<button class="opt" role="radio" aria-checked="${v===i}" data-act="vote" data-w="${who}" data-i="${i}"><span class="rd"></span>${o}${ever&&prev===i?' <span class="tag" style="margin-left:auto">Votre vote actuel</span>':''}</button>`).join('')}</div>
+    <button class="btn dark" data-act="votesubmit" data-w="${who}" ${v===null||(ever&&v===prev)?'disabled':''}>${ever?'Enregistrer mon nouveau choix':'Valider mon vote'}</button>
+    ${ever?`<button class="link" data-act="revoteCancel" data-w="${who}" style="align-self:center">Garder mon vote actuel</button>`:''}
+    ${who==='adh'?'<span class="tiny">Votre réponse n’est jamais rattachée à votre nom, y compris pour les délégués. Vous pourrez changer d’avis jusqu’à la clôture.</span>':''}`}</div>`;
 }
 const NAVETTE = `<div class="card"><div class="lbl">Résultats du sondage · 16 oct.</div><b style="font-size:.92em">Une navette entre la gare et le site ? Oui à une large majorité</b><div class="tiny">Vote anonyme · résultats publiés par la section</div>
   <div class="res"><div><div class="l"><span>Oui</span><b>72 %</b></div><div class="bar"><i style="width:72%"></i></div></div><div><div class="l"><span>Non</span><b>28 %</b></div><div class="bar"><i style="width:28%"></i></div></div></div></div>`;
@@ -735,7 +739,7 @@ pilotage:{n:13,g:'pil',l:'Tableau de bord',r(){
     </div>
     <div class="card"><div style="display:flex;justify-content:space-between;align-items:center"><b>Sondage en cours</b><span class="live">EN DIRECT</span></div>
       <div class="tiny">Priorité pour les NAO · vote anonyme · % des votants de chaque public</div>
-      <div class="legend" style="margin:8px 0"><div><span class="sq" style="background:var(--btn)"></span>Adhérents<br><b>${Math.round((POLL.adh.votes+(S.adhVoted?1:0))/S.nAdh*100)} %</b> · ${POLL.adh.votes+(S.adhVoted?1:0)}/${S.nAdh}</div><div><span class="sq" style="background:var(--o)"></span>Sympathisants<br><b>${Math.round((POLL.sym.votes+(S.symVoted?1:0))/38*100)} %</b> · ${POLL.sym.votes+(S.symVoted?1:0)}/38</div></div>
+      <div class="legend" style="margin:8px 0"><div><span class="sq" style="background:var(--btn)"></span>Adhérents<br><b>${Math.round((POLL.adh.votes+(S.adhEver?1:0))/S.nAdh*100)} %</b> · ${POLL.adh.votes+(S.adhEver?1:0)}/${S.nAdh}</div><div><span class="sq" style="background:var(--o)"></span>Sympathisants<br><b>${Math.round((POLL.sym.votes+(S.symEver?1:0))/38*100)} %</b> · ${POLL.sym.votes+(S.symEver?1:0)}/38</div></div>
       <div class="res">${POLL.opts.map((o,i)=>`<div><div class="l"><b>${o}</b><span>${POLL.adh.pct[i]} % · ${POLL.sym.pct[i]} %</span></div><div class="bar ink"><i style="width:${POLL.adh.pct[i]}%"></i></div><div class="bar" style="margin-top:3px"><i style="width:${POLL.sym.pct[i]}%"></i></div></div>`).join('')}</div></div>
     <div class="card"><b>Adhérents par collège</b> <span class="tiny">sur ${S.nAdh} · chiffres fictifs</span>
       <div class="res">${[['Ouvriers et employés',34],['Techniciens et agents de maîtrise',41],['Ingénieurs et cadres',19],['Non renseigné',6]].map(([l,v])=>`<div><div class="l"><span>${l}</span><b>${v} %</b></div><div class="bar ink"><i style="width:${v}%"></i></div></div>`).join('')}</div></div>`,
@@ -978,7 +982,11 @@ const ACT = {
   publish(){ const K={story:'Story',info:'Info du jour',actu:'Actualité',sondage:'Sondage',reunion:'Réunion'}; const t=(document.getElementById('pt')||{}).value||'';
     S.pubs.unshift({k:K[S.pub],t:t.slice(0,38),v:0}); S.pubs=S.pubs.slice(0,4); toast('Publié. Les abonnés à la rubrique sont notifiés.'); },
   vote(el){ if(el.dataset.w==='adh') S.adhVote=+el.dataset.i; else S.symVote=+el.dataset.i; render(true); },
-  votesubmit(el){ if(el.dataset.w==='adh'){ if(S.adhVote===null) return; S.adhVoted=true; } else { if(S.symVote===null) return; S.symVoted=true; } render(true); }
+  votesubmit(el){ const w=el.dataset.w==='adh'?'adh':'sym', changed=S[w+'Ever'];
+    if(S[w+'Vote']===null) return; S[w+'Voted']=true; S[w+'Ever']=true; S[w+'Prev']=S[w+'Vote'];
+    if(changed) toast('Votre vote est modifié. Seul votre dernier choix compte.'); else render(true); },
+  revote(el){ const w=el.dataset.w==='adh'?'adh':'sym'; S[w+'Voted']=false; render(true); },
+  revoteCancel(el){ const w=el.dataset.w==='adh'?'adh':'sym'; S[w+'Vote']=S[w+'Prev']; S[w+'Voted']=true; render(true); }
 };
 
 phone.addEventListener('click', e => {
@@ -1043,7 +1051,7 @@ const h0 = location.hash.slice(1); if(h0 && SCREENS[h0]) go(h0, true); else rend
 
 <script>
 (function(){
-  var CODE = "NAO2026", KEY = 'secam-demo-ok', BUILD = "08/11 13h09";
+  var CODE = "NAO2026", KEY = 'secam-demo-ok', BUILD = "08/11 13h12";
   var gate = document.getElementById('gate'), form = document.getElementById('gateForm'),
       input = document.getElementById('gateCode'), err = document.getElementById('gateErr');
   function ok(){ try { return localStorage.getItem(KEY) === CODE; } catch(e){ return false; } }
