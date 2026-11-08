@@ -1,0 +1,990 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#EE7203">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="SECAM Connect">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<title>SECAM Connect</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&family=Source+Serif+4:opsz,wght@8..60,500;8..60,600&display=swap">
+<style>
+/* Layout: guide panel on the left (screen index grouped by profile), phone device on the right. Phone stacks under a compact picker at narrow widths. */
+:root{
+  --pg:#ECE9E4; --pg-fg:#22252E; --pg-sub:#676A73; --pg-line:#D6D0C7; --pg-card:#F7F5F2; --acc:#B85300;
+  --f-ui:"Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-disp:"Source Serif 4", Georgia, "Times New Roman", serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--pg:#121318;--pg-fg:#ECEAE6;--pg-sub:#9B9DA5;--pg-line:#2B2E37;--pg-card:#1B1D24;--acc:#F39A4A;color-scheme:dark}}
+:root[data-theme="dark"]{--pg:#121318;--pg-fg:#ECEAE6;--pg-sub:#9B9DA5;--pg-line:#2B2E37;--pg-card:#1B1D24;--acc:#F39A4A;color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--pg);color:var(--pg-fg);font-family:var(--f-ui);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+
+.wrap{max-width:1080px;margin:0 auto;display:grid;grid-template-columns:minmax(0,1fr) 410px;gap:40px;align-items:start}
+.guide{min-width:0;display:flex;flex-direction:column;gap:22px}
+.guide h1{font-family:var(--f-disp);font-weight:600;font-size:2.1rem;line-height:1.1;margin:0;text-wrap:balance}
+.guide .lede{margin:0;color:var(--pg-sub);font-size:.98rem;line-height:1.5;max-width:58ch}
+.badge{display:inline-flex;gap:6px;align-items:center;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;font-weight:700;color:var(--acc)}
+.groups{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px}
+.grp h2{font-size:.74rem;letter-spacing:.08em;text-transform:uppercase;color:var(--pg-sub);margin:0 0 8px;font-weight:700}
+.grp ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;border-top:1px solid var(--pg-line)}
+.grp li button{width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--pg-line);padding:7px 4px;display:flex;gap:10px;align-items:baseline;font-size:.92rem}
+.grp li button .n{font-variant-numeric:tabular-nums;color:var(--pg-sub);width:2.8em;flex:none;font-size:.8rem}
+.grp li button:hover{color:var(--acc)}
+.grp li button[aria-current="true"]{color:var(--acc);font-weight:700}
+.note{background:var(--pg-card);border:1px solid var(--pg-line);border-radius:10px;padding:12px 14px;font-size:.86rem;line-height:1.5;color:var(--pg-sub)}
+.note b{color:var(--pg-fg)}
+.picker{display:none}
+
+.stage{position:sticky;top:20px;display:flex;justify-content:center}
+.device{width:390px;height:800px;max-width:100%;background:#0B0C10;border-radius:46px;padding:10px;box-shadow:0 30px 60px -30px rgba(0,0,0,.45)}
+
+@media (max-width:860px){
+  body{padding-block:16px}
+  .wrap{grid-template-columns:minmax(0,1fr);gap:14px}
+  .guide .groups,.guide .lede,.guide .note.desk{display:none}
+  .guide h1{font-size:1.5rem}
+  .picker{display:flex;flex-direction:column;gap:6px}
+  .picker label{font-size:.78rem;color:var(--pg-sub);font-weight:600}
+  .picker select{width:100%;font:inherit;padding:10px;border-radius:10px;border:1px solid var(--pg-line);background:var(--pg-card);color:var(--pg-fg)}
+  .stage{position:static}
+  .device{width:100%;max-width:420px;height:max(620px,calc(100dvh - 190px));border-radius:34px;padding:6px}
+}
+
+/* ---------- App (inside phone) ---------- */
+.phone{
+  --o:#EE7203; --o-dk:#C65D00; --on-o:#1A2E55; --bg:#F5F3F0; --card:#FFFFFF; --tx:#1A2E55; --sub:#5A6787; --bd:#E4E0DA;
+  --soft:#FDF0E3; --btn:#1A2E55; --btn-tx:#FFFFFF; --ink:#1A2E55; --ok:#2E7D4F; --okbg:#E7F3EB; --bad:#B83227; --badbg:#FBEBE9; --track:#ECE8E3;
+  --scale:1;
+  position:relative;height:100%;border-radius:36px;overflow:hidden;background:var(--bg);color:var(--tx);
+  font-family:var(--f-ui);font-size:calc(14px * var(--scale));line-height:1.4;color-scheme:light;
+}
+.phone.dark{--bg:#121725;--card:#1C2333;--tx:#EEF1F7;--sub:#A3ADC2;--bd:#2C3548;--soft:#3A2817;--btn:#EEF1F7;--btn-tx:#121725;--ink:#0C1120;--okbg:#18301F;--ok:#6CC28F;--badbg:#3A1E1B;--bad:#F08A7E;--track:#30343F;color-scheme:dark}
+.phone.large{--scale:1.12}
+@media (max-width:860px){.phone{border-radius:28px}}
+
+.scr{display:flex;flex-direction:column;height:100%}
+.scr > header,.scr > nav{flex-shrink:0}
+.body > *{flex-shrink:0}
+.body{flex:1;overflow-y:auto;overflow-x:hidden;padding:14px 16px 20px;display:flex;flex-direction:column;gap:12px}
+.hd{padding:34px 18px 16px;display:flex;flex-direction:column;gap:2px;border-bottom:1px solid var(--bd);background:var(--card)}
+.hd.orange{background:var(--o);color:var(--on-o);border:0}
+.hd.ink{background:var(--ink);color:#fff;border:0}
+.hd .eb{font-size:.68em;letter-spacing:.07em;text-transform:uppercase;font-weight:700;color:var(--o)}
+.hd.orange .eb{color:var(--on-o);opacity:.85}
+.hd.ink .eb{color:var(--o)}
+.hd h3{margin:0;font-size:1.42em;font-weight:800;line-height:1.15}
+.hd p{margin:4px 0 0;font-size:.84em;color:var(--sub)}
+.hd.orange p{color:var(--on-o);opacity:.9}
+.hd .row{display:flex;align-items:center;gap:8px}
+.back{background:none;border:0;padding:2px 4px 2px 0;display:inline-flex;color:inherit}
+.back svg{width:1.3em;height:1.3em}
+
+.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:12px}
+.card.flush{padding:0;overflow:hidden}
+.lbl{font-size:.68em;letter-spacing:.07em;text-transform:uppercase;font-weight:700;color:var(--o)}
+.sec{font-size:1.05em;font-weight:800;margin:4px 0 -2px}
+.muted{color:var(--sub);font-size:.84em}
+.small{font-size:.78em}
+.tiny{font-size:.72em;color:var(--sub)}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border-radius:10px;border:1px solid transparent;padding:11px 14px;font-weight:700;font-size:.92em;background:var(--o);color:var(--on-o);width:100%}
+.btn.dark{background:var(--btn);color:var(--btn-tx)}
+.btn.ghost{background:var(--card);color:var(--tx);border-color:var(--bd)}
+.btn.sm{width:auto;padding:7px 12px;font-size:.8em;border-radius:999px}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.btn svg{width:1.15em;height:1.15em}
+.link{background:none;border:0;padding:0;color:var(--o-dk);font-weight:700;text-decoration:underline;font-size:.86em}
+.phone.dark .link{color:var(--o)}
+
+.field{display:flex;flex-direction:column;gap:4px}
+.field label{font-size:.78em;font-weight:600}
+.inp{width:100%;font:inherit;font-size:.92em;padding:10px;border:1px solid var(--bd);border-radius:8px;background:var(--card);color:var(--tx)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+.icon-btn{width:2.3em;height:2.3em;border-radius:50%;border:1px solid var(--bd);background:var(--card);display:inline-flex;align-items:center;justify-content:center;color:var(--tx);flex:none}
+.icon-btn svg{width:1.05em;height:1.05em}
+.av{width:2.3em;height:2.3em;border-radius:50%;background:var(--o);color:var(--on-o);font-weight:800;font-size:.8em;display:flex;align-items:center;justify-content:center;flex:none}
+.person{display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid var(--bd)}
+.person:last-child{border-bottom:0}
+.person .who{flex:1;min-width:0}
+.person .who b{display:block;font-size:.92em}
+.person .who span{font-size:.76em;color:var(--sub)}
+
+.tabs{display:flex;border-top:1px solid var(--bd);background:var(--card);padding:8px 4px 16px}
+.tabs button{flex:1;background:none;border:0;font-size:.74em;padding:6px 2px;color:var(--sub);font-weight:600;display:flex;flex-direction:column;align-items:center;gap:3px}
+.tabs button svg{width:1.6em;height:1.6em}
+.tabs button[aria-current="true"]{color:var(--o)}
+
+.bar{height:6px;border-radius:4px;background:var(--track);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--o);border-radius:4px}
+.bar.ink i{background:var(--btn)}
+.res{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.res .l{display:flex;justify-content:space-between;font-size:.8em;font-variant-numeric:tabular-nums}
+
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--bd);background:var(--card);border-radius:999px;padding:6px 12px;font-size:.8em;font-weight:600;color:var(--tx)}
+.chip[aria-pressed="true"]{background:var(--btn);color:var(--btn-tx);border-color:var(--btn)}
+.chip.o[aria-pressed="true"]{background:var(--o);border-color:var(--o);color:var(--on-o)}
+.tag{display:inline-block;font-size:.66em;font-weight:700;padding:2px 7px;border-radius:999px;background:var(--track);color:var(--tx);vertical-align:middle}
+.pill{font-size:.72em;font-weight:700;padding:3px 8px;border-radius:999px;background:var(--okbg);color:var(--ok)}
+.pill.bad{background:var(--badbg);color:var(--bad)}
+
+.list-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px;border-bottom:1px solid var(--bd);font-size:.88em;width:100%;background:none;border-left:0;border-right:0;border-top:0;text-align:left;color:var(--tx)}
+.list-row:last-child{border-bottom:0}
+.list-row .v{color:var(--sub);font-weight:600;display:flex;align-items:center;gap:4px}
+.list-row svg{width:1em;height:1em;color:var(--sub)}
+.sw{width:2.6em;height:1.5em;border-radius:999px;background:var(--track);position:relative;border:0;flex:none;transition:background .15s}
+.sw::after{content:"";position:absolute;top:.18em;left:.18em;width:1.14em;height:1.14em;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.25);transition:transform .15s}
+.sw[aria-checked="true"]{background:var(--o)}
+.sw[aria-checked="true"]::after{transform:translateX(1.1em)}
+
+.storycard{display:flex;align-items:center;gap:10px;text-align:left;width:100%}
+.ring{width:2.8em;height:2.8em;border-radius:50%;border:3px solid var(--o);display:flex;align-items:center;justify-content:center;flex:none}
+.ring span{width:2em;height:2em;border-radius:50%;background:var(--btn);color:var(--btn-tx);display:flex;align-items:center;justify-content:center}
+.ring svg{width:.9em;height:.9em}
+.info{background:var(--ink);color:#fff;border-radius:12px;padding:10px 12px;display:flex;gap:10px;align-items:flex-start}
+.phone.dark .info{border:1px solid var(--bd)}
+.info svg{width:1.2em;height:1.2em;color:var(--o);flex:none;margin-top:2px}
+.info .lbl{color:var(--o)}
+.shortcuts{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.shortcuts button{border-radius:12px;padding:10px 8px;display:flex;flex-direction:column;align-items:center;gap:4px;font-weight:700;font-size:.8em;border:1px solid var(--bd);background:var(--card);color:var(--tx)}
+.shortcuts button.primary{background:var(--o);border-color:var(--o);color:var(--on-o)}
+.shortcuts svg{width:1.3em;height:1.3em}
+
+.event{display:grid;grid-template-columns:3em 1fr;gap:10px}
+.date{border:1px solid var(--bd);border-radius:8px;text-align:center;padding:4px 0;font-variant-numeric:tabular-nums;align-self:start}
+.date b{display:block;font-size:1.15em}
+.date span{font-size:.62em;text-transform:uppercase;color:var(--sub);font-weight:700}
+
+.story{background:#0D0F13;color:#fff;height:100%;display:flex;flex-direction:column;padding:30px 12px 18px;gap:10px}
+.story .prog{height:3px;background:rgba(255,255,255,.25);border-radius:2px;overflow:hidden}
+.story .prog i{display:block;height:100%;width:0;background:#fff}
+.story.playing .prog i{animation:prog 30s linear forwards}
+@keyframes prog{to{width:100%}}
+@media (prefers-reduced-motion:reduce){.story.playing .prog i{animation:none;width:100%}}
+.story .top{display:flex;align-items:center;gap:8px}
+.story .top .av{background:#2B2F39;border:2px solid var(--o);color:#fff}
+.story .top button{margin-left:auto;background:none;border:0;color:#fff}
+.story .top svg{width:1.3em;height:1.3em}
+.story .vid{flex:1;border-radius:14px;background:linear-gradient(160deg,#2A2E38,#1A1C22);position:relative;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;padding:14px}
+.story .vid .play{width:3.6em;height:3.6em;border-radius:50%;background:var(--o);border:0;color:var(--on-o);display:flex;align-items:center;justify-content:center}
+.story .vid .play svg{width:1.4em;height:1.4em}
+.story .vid .dur{position:absolute;top:12px;left:12px;font-size:.72em;background:rgba(255,255,255,.12);padding:3px 8px;border-radius:999px}
+.story .vid .cap{position:absolute;left:14px;right:14px;bottom:14px}
+.story .vid .cap b{font-size:1.25em;display:block;line-height:1.2;margin-top:6px}
+.story .reply{display:flex;gap:8px}
+.story .reply button{flex:1;text-align:left;background:none;border:1px solid rgba(255,255,255,.3);border-radius:999px;color:rgba(255,255,255,.75);padding:9px 14px;font-size:.8em}
+.story .reply .heart{flex:none;width:2.6em;padding:0;display:flex;align-items:center;justify-content:center}
+.story .reply .heart[aria-pressed="true"]{color:var(--o);border-color:var(--o)}
+.story .reply svg{width:1.1em;height:1.1em}
+
+.center{display:flex;flex-direction:column;align-items:center;text-align:center;gap:8px}
+.bigicon{width:3.4em;height:3.4em;border-radius:50%;background:var(--o);color:var(--on-o);display:flex;align-items:center;justify-content:center}
+.bigicon.lock{background:var(--badbg);color:var(--bad)}
+.bigicon svg{width:1.5em;height:1.5em}
+.steps{display:flex;flex-direction:column}
+.step{display:flex;gap:10px;padding:10px 12px;border-bottom:1px solid var(--bd);text-align:left}
+.step:last-child{border-bottom:0}
+.step .dot{width:1.6em;height:1.6em;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;font-size:.78em;font-weight:800;border:1.5px solid var(--bd);color:var(--sub)}
+.step .dot.done{background:var(--ok);border-color:var(--ok);color:#fff}
+.step .dot.cur{background:var(--o);border-color:var(--o);color:var(--on-o)}
+.step .dot svg{width:1em;height:1em}
+.step b{font-size:.86em;display:block}
+
+.member-card{background:var(--ink);color:#fff;border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:10px;border:1px solid var(--bd)}
+.member-card .top{display:flex;justify-content:space-between;align-items:center;font-weight:800;font-size:.9em}
+.member-card .top span{background:var(--o);color:var(--on-o);padding:2px 8px;border-radius:999px;font-size:.72em}
+.member-card .nm{font-size:1.3em;font-weight:800;line-height:1.1}
+.member-card .meta{display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:.72em;color:rgba(255,255,255,.65)}
+.member-card .meta b{display:block;color:#fff;font-size:1.25em;font-variant-numeric:tabular-nums}
+.member-card .ok{font-size:.78em;display:flex;align-items:center;gap:6px;color:#8FD6A9}
+.member-card .ok svg{width:1.1em;height:1.1em}
+
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.stat{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:10px;text-align:left;color:var(--tx)}
+.stat b{display:block;font-size:1.5em;font-variant-numeric:tabular-nums;line-height:1}
+.stat span{font-size:.72em;color:var(--sub);display:block;margin-top:3px;line-height:1.2}
+.stat em{font-style:normal;font-size:.72em;font-weight:700;color:var(--o-dk);display:block;margin-top:4px}
+.phone.dark .stat em{color:var(--o)}
+.stat.hot{background:var(--soft);border-color:var(--o)}
+.live{color:var(--bad);font-size:.7em;font-weight:800;letter-spacing:.04em;display:inline-flex;align-items:center;gap:5px}
+.live::before{content:"";width:.6em;height:.6em;border-radius:50%;background:currentColor;animation:blink 1.4s infinite}
+@keyframes blink{50%{opacity:.25}}
+@media (prefers-reduced-motion:reduce){.live::before{animation:none}}
+.legend{display:flex;gap:8px}
+.legend div{flex:1;background:var(--bg);border-radius:8px;padding:6px 8px;font-size:.72em}
+.legend b{font-size:1.25em;font-variant-numeric:tabular-nums}
+.sq{display:inline-block;width:.7em;height:.7em;border-radius:2px;margin-right:4px;vertical-align:middle}
+.alert{display:flex;gap:8px;align-items:flex-start;border:1px solid var(--o);background:var(--soft);border-radius:10px;padding:9px 10px;font-size:.78em}
+.alert.ok{border-color:var(--ok);background:var(--okbg)}
+.alert svg{width:1.2em;height:1.2em;flex:none;color:var(--o-dk)}
+.alert.ok svg{color:var(--ok)}
+.search{position:relative}
+.search svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);width:1em;height:1em;color:var(--sub)}
+.search .inp{padding-left:32px}
+.mrow{display:flex;gap:8px;align-items:center;padding:10px 12px;border-bottom:1px solid var(--bd)}
+.mrow:last-child{border-bottom:0}
+.mrow.restricted{background:var(--badbg)}
+.mrow .who{flex:1;min-width:0;text-align:left;background:none;border:0;padding:0;color:var(--tx)}
+.mrow .who b{font-size:.88em}
+.mrow .who div{font-size:.74em;color:var(--sub);overflow-wrap:anywhere}
+.mrow .who .r{color:var(--bad);font-weight:700}
+.opt{display:flex;align-items:center;gap:10px;border:1px solid var(--bd);border-radius:10px;padding:10px 12px;background:var(--card);font-size:.88em;text-align:left;width:100%;color:var(--tx)}
+.opt .rd{width:1.1em;height:1.1em;border-radius:50%;border:2px solid var(--sub);flex:none}
+.opt[aria-checked="true"]{border-color:var(--o);background:var(--soft)}
+.opt[aria-checked="true"] .rd{border-color:var(--o);background:radial-gradient(var(--o) 45%,transparent 50%)}
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.tile{border:1px solid var(--bd);border-radius:10px;background:var(--card);padding:10px;text-align:left;color:var(--tx)}
+.tile b{display:block;font-size:.9em}
+.tile span{font-size:.72em;color:var(--sub)}
+.tile[aria-pressed="true"]{background:var(--o);border-color:var(--o);color:var(--on-o)}
+.tile[aria-pressed="true"] span{color:var(--on-o);opacity:.9}
+.tile.wide{grid-column:span 2}
+.join{background:var(--o);color:var(--on-o);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:8px}
+.join b{font-size:1em}
+.join p{margin:0;font-size:.8em;opacity:.95}
+.join .btn{background:#1A2E55;color:#fff}
+.check{display:flex;gap:8px;align-items:flex-start;font-size:.8em}
+.check input{margin-top:3px;accent-color:var(--o)}
+
+.overlay{position:absolute;inset:0;background:rgba(10,12,16,.45);display:flex;align-items:flex-end;z-index:5}
+.sheet{background:var(--card);color:var(--tx);width:100%;border-radius:18px 18px 0 0;padding:14px 16px 22px;display:flex;flex-direction:column;gap:10px}
+.sheet .grab{width:2.6em;height:4px;background:var(--bd);border-radius:2px;align-self:center}
+.sheet h4{margin:0;font-size:1.02em}
+.mail{border:1px solid var(--bd);border-radius:10px;font-size:.82em}
+.mail div{padding:8px 10px;border-bottom:1px solid var(--bd);overflow-wrap:anywhere}
+.mail div:last-child{border-bottom:0;white-space:pre-line;color:var(--sub)}
+.mail span{color:var(--sub);display:inline-block;width:3.6em}
+.toast{position:absolute;left:14px;right:14px;bottom:86px;background:var(--btn);color:var(--btn-tx);border-radius:10px;padding:10px 12px;font-size:.82em;font-weight:600;z-index:6;display:flex;gap:10px;align-items:center;justify-content:space-between}
+.toast button{background:none;border:0;color:var(--o);font-weight:800;padding:0}
+
+/* ---------- Mode appli (démo installable) ---------- */
+html,body{height:100%}
+body{margin:0;padding:0!important;background:#F5F3F0;overscroll-behavior:none;-webkit-text-size-adjust:100%}
+.wrap{display:block;max-width:none;margin:0;height:100%}
+.stage{position:static;display:block;height:100%}
+.device{width:100%;max-width:520px;height:100%;margin:0 auto;border-radius:0;padding:0;background:none;box-shadow:none}
+.phone{border-radius:0!important}
+.hd{padding-top:calc(16px + env(safe-area-inset-top,0px))}
+.scr > header.hd[style]{padding-top:calc(22px + env(safe-area-inset-top,0px))!important}
+.story{padding-top:calc(16px + env(safe-area-inset-top,0px))}
+.tabs{padding-bottom:calc(10px + env(safe-area-inset-bottom,0px))}
+.body{padding-bottom:calc(20px + env(safe-area-inset-bottom,0px))}
+.inp{font-size:16px}
+/* Panneau « Démo » : la liste des écrans, cachée par défaut */
+.guide{display:none;position:fixed;z-index:30;left:12px;right:12px;top:calc(52px + env(safe-area-inset-top,0px));
+  max-width:496px;margin:0 auto;background:#fff;color:#1A2E55;border-radius:14px;padding:14px;gap:10px;box-shadow:0 12px 40px rgba(10,20,40,.35)}
+body.demo-open .guide{display:flex}
+.guide .groups,.guide .lede,.guide .note{display:none!important}
+.guide h1{font-size:1.1rem!important;color:#1A2E55}
+.guide .badge{color:#C65D00}
+.picker{display:flex!important;flex-direction:column;gap:6px}
+.picker select{width:100%;font:inherit;font-size:16px;padding:10px;border-radius:10px;border:1px solid #D6D0C7;background:#F7F5F2;color:#1A2E55}
+.demo-tip{font-size:.8rem;color:#5A6787;line-height:1.4;margin:0}
+#demoBtn{position:fixed;z-index:31;top:calc(8px + env(safe-area-inset-top,0px));right:calc(8px + env(safe-area-inset-right,0px));
+  border:0;border-radius:999px;padding:6px 11px;font:700 12px/1 var(--f-ui);background:rgba(26,46,85,.82);color:#fff;letter-spacing:.02em}
+/* Écran du code d'accès */
+#gate{position:fixed;inset:0;z-index:50;background:#EE7203;color:#1A2E55;display:flex;align-items:center;justify-content:center;
+  padding:calc(24px + env(safe-area-inset-top,0px)) 24px calc(24px + env(safe-area-inset-bottom,0px));font-family:var(--f-ui)}
+#gate[hidden]{display:none}
+#gate form{width:100%;max-width:340px;display:flex;flex-direction:column;gap:12px}
+#gate .logo{font-weight:800;font-size:.85rem;letter-spacing:.08em;text-transform:uppercase}
+#gate h2{margin:0;font-size:1.7rem;line-height:1.15;font-weight:800}
+#gate p{margin:0;font-size:.95rem;line-height:1.45}
+#gate input{font:inherit;font-size:18px;padding:13px 14px;border-radius:12px;border:2px solid #1A2E55;background:#fff;color:#1A2E55;letter-spacing:.1em;text-align:center;text-transform:uppercase}
+#gate button{font:inherit;font-weight:800;font-size:16px;padding:14px;border:0;border-radius:12px;background:#1A2E55;color:#fff;cursor:pointer}
+#gate .err{color:#7A1A10;font-weight:700;font-size:.9rem;min-height:1.2em}
+#gate .small{font-size:.8rem;opacity:.85}
+</style>
+</head>
+<body>
+
+
+
+<div id="gate">
+  <form id="gateForm" novalidate>
+    <span class="logo">SECAM Connect</span>
+    <h2>Version de démonstration</h2>
+    <p>Saisissez le code d'accès qui vous a été communiqué par la section.</p>
+    <input id="gateCode" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Code d'accès" placeholder="Code d'accès">
+    <span class="err" id="gateErr" role="alert"></span>
+    <button type="submit">Entrer</button>
+    <span class="small">Données fictives. Rien n'est enregistré ni envoyé.</span>
+  </form>
+</div>
+<button id="demoBtn" type="button" aria-expanded="false" aria-controls="guide">Démo ▾</button>
+<div class="wrap">
+  <section class="guide" id="guide">
+    <div>
+      <span class="badge">Prototype cliquable · données fictives</span>
+      <h1>SECAM Connect</h1>
+    </div>
+    <p class="lede">Les écrans du projet, reliés entre eux. Naviguez dans le téléphone comme dans la vraie application, ou sautez directement à un écran ci-dessous. Les boutons d'appel, de SMS et d'e-mail montrent ce que le téléphone ouvrirait.</p>
+    <p class="demo-tip">Changez de profil ou d'écran : adhérent, pilotage DS / RS, sympathisant, administration SECAM. Le code SMS de démonstration est 482 917.</p>
+    <div class="picker">
+      <label for="pick">Aller à l'écran</label>
+      <select id="pick"></select>
+    </div>
+    <div class="groups" id="groups"></div>
+    <div class="note desk"><b>Prototype de démonstration.</b> Rien n'est enregistré ni envoyé, et les noms, numéros et chiffres sont inventés. Le code SMS de démonstration est 482 917. Dans l'administration SECAM, modifiez un élu de Entreprise A : l'annuaire des délégués change aussitôt. Essayez aussi de restreindre l'accès de Claire Martin dans l'espace pilotage, puis revenez sur son accueil : elle passe en mode sympathisant.</div>
+  </section>
+  <div class="stage"><div class="device"><div class="phone" id="phone"></div></div></div>
+</div>
+
+<script>
+(function(){
+const I = {
+  phone:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/></svg>',
+  sms:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>',
+  mail:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/></svg>',
+  lock:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>',
+  clock:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
+  check:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>',
+  chev:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>',
+  back:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>',
+  play:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 4v16l13-8z"/></svg>',
+  pause:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 4h4v16H6zM14 4h4v16h-4z"/></svg>',
+  x:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>',
+  info:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16.5v.01"/></svg>',
+  dl:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0-5-5m5 5 5-5M4 21h16"/></svg>',
+  search:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>',
+  shield:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>',
+  heart:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21.2l8.8-8.8a5.5 5.5 0 0 0 0-7.8z"/></svg>',
+  home:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg>',
+  cal:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/></svg>',
+  users:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="4"/><path d="M2 21a7 7 0 0 1 14 0M16 4a4 4 0 0 1 0 8M22 21a7 7 0 0 0-4-6.3"/></svg>',
+  user:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>',
+  poll:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 20V10M12 20V4M19 20v-7"/></svg>',
+  news:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 8h10M7 12h10M7 16h6"/></svg>',
+  gauge:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 18a8 8 0 1 1 16 0"/><path d="m12 18 4-6"/></svg>',
+  pen:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>',
+  book:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5z"/><path d="M4 19.5A2.5 2.5 0 0 0 6.5 22H20v-5"/></svg>',
+  inbox:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.5 5h13L22 12v6a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-6z"/></svg>'
+};
+
+const ENT = 'Entreprise A';
+const entOpts = () => ENTDATA.filter(e=>!e.arch).map(e=>e.name).map(e=>`<option ${e===ENT?'selected':''}>${e}</option>`).join('');
+const TRESO = 'tresorerie@secam-exemple.fr';
+const ME = {prenom:'Claire', nom:'Martin', npa:'0412 776', depuis:'2019'};
+const COLLEGES = {E:'Ouvriers et employés', T:'Techniciens et agents de maîtrise', C:'Ingénieurs et cadres'};
+const SHORT = {E:'Employés', T:'TAM', C:'Cadres'};
+const ROLES = {
+  DS:{g:'Délégué syndical (DS)', r:'Délégué syndical', o:0},
+  RS:{g:'Représentant syndical (RS)', r:'Représentant syndical au CSE', o:1},
+  CT:{g:'Élus CSE', r:'Élu CSE titulaire', o:2},
+  CS:{g:'Élus CSE', r:'Élu CSE suppléant', o:3}
+};
+const ENTDATA = [
+  {name:'Entreprise A', mail:'section.entreprise-a@secam-exemple.fr', adh:142, m:[
+    {role:'DS',n:'Sophie Laurent',tel:'06 00 00 00 01',fin:'2028-06',gest:'S'},{role:'RS',n:'Mehdi Amrani',tel:'06 00 00 00 02',fin:'2028-06',gest:'P'},
+    {role:'CT',n:'Patrick Dumas',tel:'06 00 00 00 03',fin:'2028-06'},{role:'CT',n:'Amandine Rey',tel:'06 00 00 00 04',fin:'2028-06'},
+    {role:'CS',n:'Lucas Fabre',tel:'06 00 00 00 05',fin:'2028-06'}]},
+  {name:'Entreprise B', mail:'section.entreprise-b@secam-exemple.fr', adh:96, m:[
+    {role:'DS',n:'Isabelle Garcia',tel:'06 00 00 01 01',fin:'2026-12',gest:'S'},{role:'RS',n:'Damien Faure',tel:'06 00 00 01 02',fin:'2026-12',gest:'P'},
+    {role:'CT',n:'Nathalie Blanc',tel:'06 00 00 01 03',fin:'2026-12'}]},
+  {name:'Entreprise C', mail:'section.entreprise-c@secam-exemple.fr', adh:41, m:[
+    {role:'DS',n:'Olivier Caron',tel:'06 00 00 02 01',fin:'2027-09',gest:'S'},{role:'CT',n:'Samia Benhamou',tel:'06 00 00 02 02',fin:'2027-09'}]},
+  {name:'Entreprise D', mail:'section.entreprise-d@secam-exemple.fr', adh:58, m:[
+    {role:'DS',n:'Julie Moreau',tel:'06 00 00 03 01',fin:'2029-03',gest:'S'},{role:'RS',n:'Kevin Leroy',tel:'06 00 00 03 02',fin:'2029-03',gest:'P'},
+    {role:'CT',n:'Céline Roche',tel:'06 00 00 03 03',fin:'2029-03'}]}
+];
+const ent = name => ENTDATA.find(e=>e.name===name);
+const ini = n => n.split(/\s+/).map(w=>w[0]).join('').slice(0,2).toUpperCase();
+function delegs(name){
+  return ent(name).m.slice().sort((a,b)=>ROLES[a.role].o-ROLES[b.role].o)
+    .map(x=>({g:ROLES[x.role].g, ini:x.role, n:x.n, r:ROLES[x.role].r, tel:x.tel}));
+}
+const gP = e => e.m.find(x=>x.gest==='P'), gS = e => e.m.find(x=>x.gest==='S');
+const govCount = e => (gP(e)?1:0) + (gS(e)?1:0);
+const SG = 'Jean-Pierre Bonnet';
+const soon = fin => fin <= '2027-02';
+const finTxt = fin => { const [y,mo]=fin.split('-'); return ['janv.','févr.','mars','avr.','mai','juin','juil.','août','sept.','oct.','nov.','déc.'][+mo-1]+' '+y; };
+const AGENDA = [
+  {d:'12',m:'nov.',cat:'NAO',t:'Réunion de préparation des NAO',w:'Salle syndicale · 17 h'},
+  {d:'19',m:'nov.',cat:'CSE',t:'Séance du CSE',w:'Salle du CSE · 9 h'},
+  {d:'26',m:'nov.',cat:'Accord',t:'Négociation de l’accord télétravail',w:'Direction · 14 h'},
+  {d:'03',m:'déc.',cat:'Vie du syndicat',t:'Assemblée générale de la section',w:'Lieu à préciser · 18 h'}
+];
+const POLL = {q:'Quelle doit être la priorité des prochaines NAO ?', opts:['Salaires','Conditions de travail','Temps de travail'],
+  adh:{pct:[58,27,15], votes:96, total:142}, sym:{pct:[44,38,18], votes:16, total:38}};
+
+const S = {
+  screen:'connexion', dark:false, large:false, sheet:null, toast:null,
+  college:'T', rub:{cse:true,nao:true,synd:true,actions:false,ent:true,story:true},
+  subjects:{CSE:true,NAO:true,'Actualités':true,[`Actualité Cfdt ${ENT}`]:false,'Dialogue social':true}, unlock:null,
+  liked:false, playing:false,
+  members:[
+    {id:1,p:'Karim',n:'Benali',c:'T',tel:'06 00 00 00 11',r:false},
+    {id:2,p:'Claire',n:'Martin',c:'T',tel:'06 00 00 00 12',r:false,me:true},
+    {id:3,p:'Julien',n:'Roux',c:'C',tel:'06 00 00 00 13',r:false},
+    {id:4,p:'Nadia',n:'Haddad',c:'E',tel:'06 00 00 00 14',r:true},
+    {id:5,p:'Thomas',n:'Girard',c:'T',tel:'06 00 00 00 15',r:false},
+    {id:6,p:'Fatou',n:'Diallo',c:'E',tel:'06 00 00 00 16',r:false},
+    {id:7,p:'Antoine',n:'Mercier',c:'C',tel:'06 00 00 00 17',r:false}
+  ],
+  nAdh:142,
+  pending:[{p:'Inès',n:'Ferrand',npa:'0412 887'},{p:'Hugo',n:'Brunel',npa:'0412 903'},{p:'Sarah',n:'Ouali',npa:'0413 015'}],
+  syms:[
+    {p:'Marc',n:'Ferri',c:'E',tel:'06 00 00 00 21',w:'il y a 3 j'},
+    {p:'Élodie',n:'Garnier',c:'T',tel:'06 00 00 00 22',w:'il y a 1 sem.'},
+    {p:'Yanis',n:'Morel',c:'E',tel:'06 00 00 00 23',w:'il y a 2 sem.'},
+    {p:'Chloé',n:'Lambert',c:'C',tel:'06 00 00 00 24',w:'il y a 1 mois'},
+    {p:'Paul',n:'Vidal',c:'T',tel:'06 00 00 00 25',w:'il y a 2 mois'}
+  ],
+  code:'', codeErr:false, admins:[{n:'Martine Roux', d:'12 septembre 2026'}], adm:{addAdmin:false, ent:'Entreprise A', edit:null, add:false, addEnt:false, del:null, arch:false},
+  log:[{d:'02/11',who:'Admin SECAM',what:'Entreprise B : Damien Faure nommé représentant syndical (RS)'},{d:'15/10',who:'Admin SECAM',what:'Entreprise C : entreprise ajoutée'},{d:'03/10',who:'Admin SECAM',what:'Entreprise A : fin de mandat de Lucas Fabre mise à jour (juin 2028)'}], q:'', f:'all', sq:'', sf:'all', fiche:2, confirm:false,
+  pub:'sondage', aud:'deux',
+  pubs:[{k:'Story',t:'Point d’étape NAO',v:81},{k:'Actualité',t:'Compte rendu CSE',v:48},{k:'Sondage',t:'Priorité NAO',v:63}],
+  symVote:null, symVoted:false, adhVote:null, adhVoted:false, consent:false
+};
+
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const me = () => S.members.find(m => m.me);
+
+function head(o){
+  return `<header class="hd ${o.v||''}">
+    <div class="row">${o.back?`<button class="back" data-go="${o.back}" aria-label="Retour">${I.back}</button>`:''}<span class="eb">${o.eb||''}</span></div>
+    <h3>${o.t}</h3>${o.p?`<p>${o.p}</p>`:''}</header>`;
+}
+const TABS = {
+  adh:[['accueil','Accueil',I.home],['agenda','Agenda',I.cal],['delegues','Délégués',I.users],['compte','Mon compte',I.user]],
+  sym:[['sym-delegues','Délégués',I.users],['sym-sondages','Sondages',I.poll],['sym-actu','Actu',I.news]],
+  adm:[['admin','Entreprises',I.users],['admin-admins','Administrateurs',I.shield],['admin-journal','Journal',I.news]],
+  pil:[['pilotage','Pilotage',I.gauge],['publier','Publier',I.pen],['traiter','À traiter',I.inbox],['adherents','Adhérents',I.users],['annuaire','Annuaire',I.book]]
+};
+function tabs(kind, active){
+  return `<nav class="tabs" aria-label="Navigation">${TABS[kind].map(([id,l,ic]) =>
+    `<button data-go="${id}" aria-current="${id===active}">${ic}${l}</button>`).join('')}</nav>`;
+}
+function page(h, body, tabbar){ return `<div class="scr">${h}<div class="body" id="body">${body}</div>${tabbar||''}</div>`; }
+const bars = (pct, cls='') => POLL.opts.map((o,i)=>`<div><div class="l"><span>${o}</span><b>${pct[i]} %</b></div><div class="bar ${cls}"><i style="width:${pct[i]}%"></i></div></div>`).join('');
+function people(list, mailBtn){
+  let last = '';
+  return list.map(d => {
+    const g = d.g !== last ? `${last?'</div>':''}<div class="lbl" style="margin-top:6px">${d.g}</div><div class="card flush">` : '';
+    last = d.g;
+    return g + `<div class="person"><div class="av">${d.ini}</div><div class="who"><b>${d.n}</b><span>${d.r}</span></div>
+      <button class="icon-btn" data-act="call" data-n="${esc(d.n)}" data-tel="${d.tel}" aria-label="Appeler ${esc(d.n)}">${I.phone}</button>
+      <button class="icon-btn" data-act="sms" data-n="${esc(d.n)}" data-tel="${d.tel}" aria-label="SMS à ${esc(d.n)}">${I.sms}</button></div>`;
+  }).join('') + '</div>';
+}
+function pollCard(who){
+  const v = who==='adh' ? S.adhVote : S.symVote, done = who==='adh' ? S.adhVoted : S.symVoted;
+  const where = who==='adh' ? 'sur l\u2019accueil' : 'dans l\u2019onglet Actu';
+  return `<div class="card" style="display:flex;flex-direction:column;gap:8px">
+    <div style="display:flex;justify-content:space-between"><span class="lbl">Sondage en cours · jusqu\u2019au 20 nov.</span><span class="pill">Anonyme</span></div>
+    <b>${POLL.q}</b>
+    ${done?`<div class="alert ok">${I.check}<div>Vous avez voté. Merci ! Les résultats seront publiés ${where} à la clôture.</div></div>`:
+    `<div role="radiogroup" aria-label="${POLL.q}" style="display:flex;flex-direction:column;gap:6px">${POLL.opts.map((o,i)=>`<button class="opt" role="radio" aria-checked="${v===i}" data-act="vote" data-w="${who}" data-i="${i}"><span class="rd"></span>${o}</button>`).join('')}</div>
+    <button class="btn dark" data-act="votesubmit" data-w="${who}" ${v===null?'disabled':''}>Valider mon vote</button>
+    ${who==='adh'?'<span class="tiny">Votre réponse n\u2019est jamais rattachée à votre nom, y compris pour les délégués.</span>':''}`}</div>`;
+}
+const NAVETTE = `<div class="card"><div class="lbl">Résultats du sondage · 16 oct.</div><b style="font-size:.92em">Une navette entre la gare et le site ? Oui à une large majorité</b><div class="tiny">Vote anonyme · résultats publiés par la section</div>
+  <div class="res"><div><div class="l"><span>Oui</span><b>72 %</b></div><div class="bar"><i style="width:72%"></i></div></div><div><div class="l"><span>Non</span><b>28 %</b></div><div class="bar"><i style="width:28%"></i></div></div></div></div>`;
+function codeScreen(who){
+  const tel = who==='adh' ? '06 •• •• •• 12' : '06 •• •• •• 21';
+  const back = who==='adh' ? 'connexion' : 'sym-ident';
+  return page(head({eb: who==='adh'?'Connexion':'Espace sympathisant', t:'Vérification par SMS', back}), `
+    <div class="center" style="padding-top:6px"><div class="bigicon">${I.sms}</div>
+    <b style="font-size:1.1em">Saisissez le code reçu par SMS</b>
+    <span class="muted">Nous avons envoyé un code à 6 chiffres au <b>${tel}</b>. Il est valable 10 minutes.</span></div>
+    <form id="codeform" data-w="${who}" class="card" style="display:flex;flex-direction:column;gap:10px" novalidate>
+      <label for="code" class="small" style="font-weight:600">Code de vérification</label>
+      <input class="inp" id="code" value="${esc(S.code)}" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="––––––" style="font-size:1.6em;letter-spacing:.5em;text-align:center;font-variant-numeric:tabular-nums">
+      ${S.codeErr?`<div class="alert" style="border-color:var(--bad);background:var(--badbg)"><div>Ce code ne correspond pas. Vérifiez le SMS ou demandez un nouveau code.</div></div>`:''}
+      <button class="btn" type="submit" ${S.code.replace(/\D/g,'').length===6?'':'disabled'}>Valider le code</button>
+    </form>
+    <div class="center"><span class="muted">Vous n’avez rien reçu ?</span><button class="link" data-act="resend">Renvoyer le code</button></div>
+    <div class="alert">${I.info}<div>Prototype : le code de démonstration est <b>482 917</b>.</div></div>`);
+}
+function restrictedCard(){
+  return `<div class="card" style="display:flex;flex-direction:column;gap:10px;border-color:var(--bad)">
+    <div style="display:flex;gap:10px;align-items:center"><div class="bigicon lock" style="width:2.4em;height:2.4em">${I.lock}</div><b>Votre accès adhérent est suspendu</b></div>
+    <span class="muted">Votre cotisation n’est pas à jour. En attendant, vous retrouvez l’espace sympathisant. Régularisez votre situation auprès du trésorier pour retrouver votre espace adhérent.</span>
+    <button class="btn" data-act="mail" data-to="treso" data-s="Régularisation de ma cotisation – NPA ${ME.npa}">${I.mail}Écrire au trésorier</button>
+    <span class="tiny">Dès que le trésorier a confirmé la régularisation, votre délégué syndical rétablit votre accès. Vous n’avez rien d’autre à faire.</span>
+    <button class="btn ghost" data-act="restore-me">Simuler le rétablissement par le DS →</button></div>`;
+}
+const restrictedNote = () => me().r ? `<div class="alert" style="border-color:var(--bad);background:var(--badbg)">${I.lock}<div>Mode sympathisant : votre accès adhérent est suspendu. <button class="link" data-go="sym-delegues">En savoir plus</button></div></div>` : '';
+const symEb = () => (me().r ? 'Mode sympathisant · ' : 'Espace sympathisant · ') + ENT;
+function mandatsView(mode){
+  const A=S.adm, e=ent(A.ent), pil = mode==='pil';
+  const P = gP(e), Sx = gS(e), n = govCount(e), locked = pil && e.tut;
+  const canEdit = x => !pil || (!e.tut && x.gest!=='P');
+  const sorted = e.m.map((x,i)=>({...x,i})).sort((a,b)=>ROLES[a.role].o-ROLES[b.role].o);
+  const roles = Object.entries(ROLES).filter(([k])=>!pil||k!=='RS');
+  const roleSel = (v) => `<select class="inp" id="mr">${roles.map(([k,r])=>`<option value="${k}" ${k===v?'selected':''}>${r.r} (${k})</option>`).join('')}</select>`;
+  const form = (x) => `<form id="mform" class="card" style="display:flex;flex-direction:column;gap:8px;border-color:var(--o)" novalidate>
+      <b>${x?'Modifier le mandat':'Nouveau mandat'}</b>
+      <div class="field"><label for="mr">Rôle</label>${roleSel(x?x.role:'CT')}</div>
+      <div class="field"><label for="mn">Prénom et nom</label><input class="inp" id="mn" value="${x?esc(x.n):''}"></div>
+      <div class="two"><div class="field"><label for="mt">Téléphone</label><input class="inp" id="mt" value="${x?x.tel:''}" inputmode="tel"></div>
+      <div class="field"><label for="mf">Fin de mandat</label><input class="inp" id="mf" type="month" value="${x?x.fin:'2030-06'}"></div></div>
+      <div class="two"><button type="button" class="btn ghost" data-act="admCancel">Annuler</button><button class="btn" type="submit">Enregistrer</button></div></form>`;
+  const govLine = `<div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b style="font-size:.92em">Gouvernance de ${esc(e.name)}</b><span class="pill ${n<2?'bad':''}">${n}/2 gestionnaires</span></div>
+      <span class="small">Principal : ${P?`<b>${esc(P.n)}</b> (${P.role})`:'<b style="color:var(--bad)">à désigner</b>'}<br>Suppléant : ${Sx?`<b>${esc(Sx.n)}</b> (${Sx.role})`:'<b style="color:var(--bad)">à désigner</b>'}</span>`;
+  const tutBanner = e.tut ? `<div class="alert" style="border-color:var(--bad);background:var(--badbg)">${I.lock}<div><b>Le SECAM a repris la main</b> sur l’annuaire de ${esc(e.name)} (${esc(e.tut.who)}, le ${e.tut.d}). ${pil?'Les gestionnaires ne peuvent plus le modifier jusqu’à nouvel ordre.':'Les gestionnaires de l’entreprise ne peuvent plus le modifier.'}</div></div>` : '';
+  const who = pil ? `<div class="card" style="display:flex;flex-direction:column;gap:6px;border-color:var(--o);background:var(--soft)">${govLine}
+      <span class="tiny">Les deux gestionnaires mettent à jour les DS et les élus CSE. Les autres DS consultent l’annuaire. Le gestionnaire principal est désigné par le SECAM.</span></div>`
+    : `<div class="card" style="display:flex;flex-direction:column;gap:6px"><span class="small">E-mail de la section : <b style="overflow-wrap:anywhere">${esc(e.mail)}</b> · ${e.adh} adhérents</span></div>
+       <div class="card" style="display:flex;flex-direction:column;gap:8px">${govLine}
+       ${e.tut?`<button class="btn dark" data-act="admTut">Rendre la main aux gestionnaires</button>`:`<button class="btn ghost" data-act="admTut">${I.lock}Reprendre la main sur cette entreprise</button>`}</div>`;
+  const tag = x => x.gest==='P'?'<span class="tag">Gestionnaire principal</span>':x.gest==='S'?'<span class="tag">Gestionnaire suppléant</span>':'';
+  const links = x => {
+    if(locked || !(x.role==='DS'||x.role==='RS')) return '';
+    const out=[];
+    if(!pil && x.gest!=='P') out.push(`<button class="link" data-act="admGest" data-g="P" data-i="${x.i}" style="font-size:.74em">Désigner principal</button>`);
+    if(x.gest!=='S' && (!pil || x.gest!=='P')) out.push(`<button class="link" data-act="admGest" data-g="S" data-i="${x.i}" style="font-size:.74em">Désigner suppléant</button>`);
+    return out.length?`<div style="display:flex;gap:12px;margin-top:4px">${out.join('')}</div>`:'';
+  };
+  const row = x => A.edit===x.i ? '' : `<div class="person" style="align-items:flex-start">
+      <div class="av">${x.role}</div><div class="who"><b>${esc(x.n)}</b> ${tag(x)}<span style="display:block">${ROLES[x.role].r} · <span style="white-space:nowrap">${x.tel}</span></span>
+      <span style="display:block;color:${soon(x.fin)?'var(--bad)':'var(--sub)'};font-size:.74em;font-weight:${soon(x.fin)?700:400}">Fin de mandat : ${finTxt(x.fin)}${soon(x.fin)?' · à renouveler':''}</span>
+      ${pil&&x.gest==='P'?'<span class="tiny" style="display:block">Désigné par le SECAM</span>':''}${links(x)}
+      ${A.del===x.i?`${x.gest?`<div class="tiny" style="color:var(--bad);margin-top:6px">La gouvernance passera à ${n-1}/2. Désignez vite un remplaçant.</div>`:''}<div style="display:flex;gap:6px;margin-top:8px"><button class="btn sm ghost" data-act="admCancel">Annuler</button><button class="btn sm dark" data-act="admDel" data-i="${x.i}">Confirmer le retrait</button></div>`:''}</div>
+      ${A.del===x.i||!canEdit(x)?'':`<div style="display:flex;flex-direction:column;gap:4px"><button class="btn sm ghost" data-act="admEdit" data-i="${x.i}">Modifier</button><button class="btn sm ghost" data-act="admAskDel" data-i="${x.i}" style="color:var(--bad)">Retirer</button></div>`}</div>`;
+  const body = `${tutBanner}${who}
+    <div class="sec">Mandats</div>
+    <div class="card flush">${sorted.length?sorted.map(row).join(''):'<p class="muted" style="padding:12px;margin:0">Aucun mandat. Désignez d’abord les deux gestionnaires.</p>'}</div>
+    ${locked?'':(A.edit!==null?form(e.m[A.edit]):A.add?form(null):`<button class="btn" data-act="admAdd">+ Ajouter un ${pil?'DS ou un élu':'mandat (RS, DS ou élu)'}</button>`)}
+    <div class="alert">${I.info}<div>Il faut toujours 2 gestionnaires par entreprise. Retirer un DS lui enlève immédiatement l’accès à l’espace pilotage. Chaque changement est inscrit au journal du SECAM.</div></div>
+    ${pil||e.name===ENT?'':(A.arch?`<div class="alert" style="border-color:var(--bad);background:var(--badbg)"><div>Archiver ${esc(e.name)} ? L’entreprise n’apparaîtra plus dans les listes. Les données restent conservées.</div></div>
+      <div class="two"><button class="btn ghost" data-act="admCancel">Annuler</button><button class="btn dark" data-act="admArch">Archiver</button></div>`
+      :`<button class="btn ghost" data-act="admAskArch" style="color:var(--bad)">Archiver l’entreprise</button>`)}`;
+  return pil ? page(head({v:'ink',eb:'Espace pilotage DS / RS · '+ENT,t:'Annuaire',back:'pilotage'}), body, tabs('pil','annuaire'))
+             : page(head({v:'ink',eb:'Administration SECAM',t:esc(e.name),back:'admin'}), body, tabs('adm','admin'));
+}
+function joinCard(){
+  if(me().r) return '';
+  return `<div class="join"><b>Rejoignez la CFDT en adhérant au SECAM</b><p>Les adhérents ont aussi la story, l’info du jour, l’agenda, les rubriques et le contact de la section par mail.</p>
+  <button class="btn" data-act="bulletin">${I.dl} Bulletin d’adhésion (PDF)</button></div>`;
+}
+
+const SCREENS = {
+/* ---------------- Parcours adhérent ---------------- */
+connexion:{n:1,g:'adh',l:'Connexion',r(){
+  return `<div class="scr"><header class="hd orange" style="padding-top:40px"><span class="eb" style="font-size:.78em">SECAM Connect</span>
+    <h3>Bienvenue dans votre espace syndical</h3><p>Syndicat Énergie Chimie Alpes Méditerranée</p></header>
+    <div class="body">
+      <form id="login" class="card" style="display:flex;flex-direction:column;gap:10px" novalidate>
+        <div class="two"><div class="field"><label for="ln">Nom</label><input class="inp" id="ln" value="Martin"></div>
+        <div class="field"><label for="lp">Prénom</label><input class="inp" id="lp" value="Claire"></div></div>
+        <div class="field"><label for="lnpa">Numéro d’adhérent (NPA)</label><input class="inp" id="lnpa" value="0412 776" inputmode="numeric"></div>
+        <div class="field"><label for="ltel">Téléphone portable</label><input class="inp" id="ltel" value="06 00 00 00 12" inputmode="tel"><span class="tiny">Vous recevez un code par SMS pour confirmer que c’est bien vous.</span></div>
+        <div class="field"><label for="lent">Mon entreprise</label><select class="inp" id="lent">${entOpts()}</select></div>
+        <button class="btn" type="submit">Se connecter</button>
+      </form>
+      <div class="alert">${I.shield}<div>Première connexion : votre accès est validé par un délégué syndical, qui vérifie votre adhésion et votre cotisation.<br><button class="link" data-go="premiere">Demander mon accès</button></div></div>
+      <div class="center" style="margin-top:6px"><span class="muted">Pas encore adhérent ?</span><button class="link" data-go="sym-ident">Découvrir le SECAM en sympathisant</button></div>
+      <p class="tiny" style="text-align:center;margin-top:auto">Vos données sont protégées et ne sont jamais transmises à l’employeur.</p>
+    </div></div>`;
+}},
+'code-sms':{n:'1 bis',g:'adh',l:'Code SMS',r(){ return codeScreen('adh'); }},
+premiere:{n:2,g:'adh',l:'Première connexion',r(){
+  return page(head({t:'Première connexion',back:'connexion'}), `
+    <div class="center" style="padding-top:10px"><div class="bigicon">${I.clock}</div>
+    <b style="font-size:1.15em">Votre demande d’accès est en cours de vérification</b>
+    <span class="muted">Un délégué syndical de votre entreprise valide votre accès. Vous recevez une notification dès l’ouverture de votre espace.</span></div>
+    <div class="card flush steps">
+      <div class="step"><span class="dot done">${I.check}</span><div><b>Demande envoyée</b><span class="tiny">Nom, prénom, NPA, entreprise · téléphone vérifié par SMS</span></div></div>
+      <div class="step"><span class="dot cur">2</span><div><b>Vérification par un délégué syndical</b><span class="tiny">Adhésion confirmée et cotisation à jour · en cours</span></div></div>
+      <div class="step"><span class="dot">3</span><div><b>Accès à votre espace adhérent</b><span class="tiny">Informations, délégués, sondages, compte</span></div></div>
+    </div>
+    <p class="tiny" style="text-align:center">Une question ? Contactez votre section : ${ent(ENT).mail}</p>
+    <button class="btn ghost" data-go="bienvenue" style="margin-top:auto">Simuler la validation par le DS →</button>`);
+}},
+bienvenue:{n:3,g:'adh',l:'Bienvenue',r(){
+  const ready = !!S.unlock;
+  return `<div class="scr"><header class="hd orange" style="padding-top:40px"><span class="eb" style="font-size:.78em">SECAM Connect</span>
+    <h3>Bienvenue ${ME.prenom}, votre accès est ouvert</h3><p>Votre délégué a confirmé votre adhésion. Trois étapes pour bien démarrer.</p></header>
+    <div class="body">
+      <div class="card"><div class="lbl">1 · Votre délégué syndical</div><div class="person" style="padding:8px 0 0;border:0"><div class="av">DS</div><div class="who"><b>${(delegs(ENT)[0]||{n:'À désigner'}).n}</b><span>Il ou elle est là pour vous : appel ou SMS en un geste.</span></div></div></div>
+      <div class="card"><div class="lbl">2 · Vos sujets</div><div class="chips" style="margin-top:8px">${Object.keys(S.subjects).map(k=>`<button class="chip" data-act="subj" data-k="${k}" aria-pressed="${S.subjects[k]}">${k}</button>`).join('')}</div></div>
+      <div class="card"><div class="lbl">3 · Votre sécurité</div><p class="muted" style="margin:6px 0 8px">Choisissez un code PIN ou activez Face ID : il vous sera demandé à chaque ouverture de l’application.</p>
+        <div class="two"><button class="btn ${S.unlock==='pin'?'dark':'ghost'}" data-act="unlock" data-k="pin">${S.unlock==='pin'?I.check:''}Code PIN</button><button class="btn ${S.unlock==='face'?'dark':'ghost'}" data-act="unlock" data-k="face">${S.unlock==='face'?I.check:''}Face ID</button></div></div>
+      <button class="btn dark" data-go="accueil" style="margin-top:auto" ${ready?'':'disabled'}>Découvrir mon espace</button>
+      ${ready?'':'<p class="tiny" style="text-align:center;margin:-4px 0 0">Choisissez d’abord un code PIN ou Face ID.</p>'}
+    </div></div>`;
+}},
+accueil:{n:4,g:'adh',l:'Accueil',adh:1,r(){
+  return page(`<header class="hd orange"><span class="eb">SECAM · ${ENT}</span><h3>Bonjour ${ME.prenom}</h3></header>`, `
+    <button class="card storycard" data-go="story"><span class="ring"><span>${I.play}</span></span><span style="flex:1"><span class="lbl">Story de la section</span><br><b style="font-size:.9em">Point d’étape des NAO en 30 secondes</b></span>${I.chev.replace('<svg','<svg width="16" height="16"')}</button>
+    <div class="info">${I.info}<div><div class="lbl">L’info du jour</div><b style="font-size:.9em">Réunion d’information jeudi 12 novembre à 12 h, salle syndicale</b></div></div>
+    <div class="shortcuts"><button class="primary" data-go="delegues">${I.phone}Contacter un délégué</button><button data-act="mail" data-s="Question à la section">${I.mail}Contacter la section par mail</button></div>
+    <div class="sec">Sondage</div>
+    ${pollCard('adh')}
+    <div class="sec">Actualités</div>
+    <div class="card"><div class="lbl">CSE · 5 nov.</div><b style="font-size:.92em">Compte rendu du CSE d’octobre</b><p class="muted" style="margin:4px 0 0">Budget des activités sociales 2027, point sur les embauches et calendrier des élections.</p></div>
+    ${NAVETTE}
+    <div class="card"><div class="lbl">NAO · 2 nov.</div><b style="font-size:.92em">Nos trois revendications pour les NAO 2027</b><p class="muted" style="margin:4px 0 0">Augmentation générale, prime de transport, égalité salariale femmes-hommes.</p></div>
+    <div class="card"><div class="lbl">Information dialogue social · 30 oct.</div><b style="font-size:.92em">Accord télétravail : deuxième réunion de négociation</b><p class="muted" style="margin:4px 0 0">La direction propose 1 jour par semaine. Nous demandons 2 jours et une indemnité.</p></div>`, tabs('adh','accueil'));
+}},
+story:{n:5,g:'adh',l:'Story',adh:1,r(){
+  return `<div class="story ${S.playing?'playing':''}">
+    <div class="prog"><i></i></div>
+    <div class="top"><div class="av">DS</div><div><b style="font-size:.88em">La section · ${ENT}</b><div style="font-size:.72em;opacity:.7">il y a 2 h</div></div><button data-go="accueil" aria-label="Fermer">${I.x}</button></div>
+    <div class="vid"><span class="dur">Vidéo · 30 s</span>
+      <button class="play" data-act="play" aria-label="${S.playing?'Pause':'Lire'}">${S.playing?I.pause:I.play}</button>
+      <span style="font-size:.74em;opacity:.6">Vidéo filmée par la section</span>
+      <div class="cap"><span class="tag" style="background:var(--o);color:var(--on-o)">NAO</span><b>Point d’étape des NAO en 30 secondes</b></div></div>
+    <div class="reply"><button data-act="mail" data-s="Question sur la story : Point d’étape des NAO">Une question ? Écrire à la section par mail…</button>
+      <button class="heart" data-act="like" aria-pressed="${S.liked}" aria-label="J’aime">${I.heart}</button></div>
+  </div>`;
+}},
+agenda:{n:6,g:'adh',l:'Agenda',adh:1,r(){
+  return page(head({eb:'SECAM · '+ENT,t:'Agenda',p:'Les réunions syndicales à venir, pour information. Une question sur un événement ? Écrivez à la section par mail.'}),
+    AGENDA.map(e=>`<div class="card event"><div class="date"><b>${e.d}</b><span>${e.m}</span></div><div style="display:flex;flex-direction:column;gap:4px;min-width:0">
+      <span class="lbl">${e.cat}</span><b style="font-size:.92em">${e.t}</b><span class="tiny">${e.w}</span>
+      <button class="btn ghost sm" style="align-self:flex-start;margin-top:4px" data-act="mail" data-s="${esc(e.t+' – '+e.d+' '+e.m)}">${I.mail}Contacter la section par mail</button></div></div>`).join(''),
+    tabs('adh','agenda'));
+}},
+delegues:{n:7,g:'adh',l:'Délégués',adh:1,r(){
+  return page(head({eb:'SECAM · '+ENT,t:'Mes délégués',p:'Vos représentants dans l’entreprise. Un appui ouvre l’appel ou les SMS de votre téléphone.'}), people(delegs(ENT)), tabs('adh','delegues'));
+}},
+compte:{n:8,g:'adh',l:'Mon compte',adh:1,r(){
+  return page(head({eb:`Adhérente · NPA ${ME.npa} · ${ENT}`,t:'Mon compte'}), `
+    <button class="card storycard" data-act="mail" data-s="Actualiser ma cotisation – NPA ${ME.npa}" data-to="section"><span class="bigicon" style="width:2.4em;height:2.4em">${I.mail}</span><span style="flex:1"><b style="font-size:.92em">Actualiser ma cotisation</b><br><span class="tiny">Ouvre votre messagerie avec un e-mail prêt à envoyer à la section.</span></span>${I.chev.replace('<svg','<svg width="16" height="16"')}</button>
+    <div class="card flush">
+      <div class="list-row"><label for="col">Mon collège</label><select id="col" class="inp" style="width:auto;padding:5px 6px;font-size:.92em">${Object.entries(COLLEGES).map(([k,v])=>`<option value="${k}" ${S.college===k?'selected':''}>${v}</option>`).join('')}</select></div>
+      <button class="list-row" data-go="rubriques"><span>Mes rubriques et notifications</span><span class="v">${I.chev}</span></button>
+      <div class="list-row"><span>Déverrouillage : code PIN ou Face ID</span><span class="pill">Activé</span></div>
+      <div class="list-row"><span id="dk">Mode sombre</span><button class="sw" role="switch" aria-labelledby="dk" aria-checked="${S.dark}" data-act="dark"></button></div>
+      <button class="list-row" data-act="size"><span>Taille du texte</span><span class="v">${S.large?'Grande':'Normale'}</span></button>
+      <button class="list-row" data-go="connexion" style="color:var(--o-dk);font-weight:700">Se déconnecter</button>
+    </div>`, tabs('adh','compte'));
+}},
+sombre:{n:9,g:'adh',l:'Mode sombre',alias:'compte',pre(){S.dark=true}},
+rubriques:{n:10,g:'adh',l:'Rubriques et notifications',adh:1,r(){
+  const R=[['cse','CSE','Comptes rendus, élections, activités'],['nao','NAO','Négociations annuelles obligatoires'],['synd','Actualités du syndicat','Informations générales du SECAM'],['actions',`Actualité Cfdt ${ENT}`,`Les informations de la section CFDT chez ${ENT}`],['ent','Information dialogue social','Négociations, accords et instances représentatives'],['story','Story de la section','Prévenu à chaque nouvelle story']];
+  return page(head({eb:'Mon compte',t:'Rubriques et notifications',back:'compte',p:'Je choisis les sujets sur lesquels je veux être alertée.'}),
+    R.map(([k,t,d])=>`<div class="card" style="display:flex;align-items:center;gap:10px"><div style="flex:1"><b style="font-size:.92em" id="r-${k}">${t}</b><div class="tiny">${d}</div></div><button class="sw" role="switch" aria-labelledby="r-${k}" aria-checked="${S.rub[k]}" data-act="rub" data-k="${k}"></button></div>`).join(''),
+    tabs('adh','compte'));
+}},
+restreint:{n:11,g:'adh',l:'Accès restreint',alias:'sym-delegues',pre(){ me().r=true; }},
+
+/* ---------------- Espace pilotage ---------------- */
+pilotage:{n:13,g:'pil',l:'Tableau de bord',r(){
+  const cnt = {E:0,T:0,C:0};
+  return page(head({v:'ink',eb:'Espace pilotage DS / RS · '+ENT,t:'Tableau de bord'}), `
+    <div class="stats">
+      <button class="stat" data-go="adherents"><b>${S.nAdh}</b><span>adhérents</span><em>Voir la liste ›</em></button>
+      <button class="stat ${S.pending.length?'hot':''}" data-go="traiter"><b>${S.pending.length}</b><span>demandes d’accès à valider</span></button>
+      <button class="stat" data-go="sympathisants"><b>${S.syms.length+33}</b><span>sympathisants</span><em>Voir la liste ›</em></button>
+    </div>
+    <div class="card"><div style="display:flex;justify-content:space-between;align-items:center"><b>Sondage en cours</b><span class="live">EN DIRECT</span></div>
+      <div class="tiny">Priorité pour les NAO · vote anonyme · % des votants de chaque public</div>
+      <div class="legend" style="margin:8px 0"><div><span class="sq" style="background:var(--btn)"></span>Adhérents<br><b>${Math.round((POLL.adh.votes+(S.adhVoted?1:0))/S.nAdh*100)} %</b> · ${POLL.adh.votes+(S.adhVoted?1:0)}/${S.nAdh}</div><div><span class="sq" style="background:var(--o)"></span>Sympathisants<br><b>${Math.round((POLL.sym.votes+(S.symVoted?1:0))/38*100)} %</b> · ${POLL.sym.votes+(S.symVoted?1:0)}/38</div></div>
+      <div class="res">${POLL.opts.map((o,i)=>`<div><div class="l"><b>${o}</b><span>${POLL.adh.pct[i]} % · ${POLL.sym.pct[i]} %</span></div><div class="bar ink"><i style="width:${POLL.adh.pct[i]}%"></i></div><div class="bar" style="margin-top:3px"><i style="width:${POLL.sym.pct[i]}%"></i></div></div>`).join('')}</div></div>
+    <div class="card"><b>Adhérents par collège</b> <span class="tiny">sur ${S.nAdh} · chiffres fictifs</span>
+      <div class="res">${[['Ouvriers et employés',34],['Techniciens et agents de maîtrise',41],['Ingénieurs et cadres',19],['Non renseigné',6]].map(([l,v])=>`<div><div class="l"><span>${l}</span><b>${v} %</b></div><div class="bar ink"><i style="width:${v}%"></i></div></div>`).join('')}</div></div>`,
+    tabs('pil','pilotage'));
+}},
+adherents:{n:14,g:'pil',l:'Adhérents',r(){
+  const q = S.q.trim().toLowerCase();
+  const list = S.members.filter(m => (S.f==='all'||m.c===S.f) && (!q || (m.p+' '+m.n).toLowerCase().includes(q)));
+  return page(head({v:'ink',eb:'Espace pilotage DS / RS',t:`Adhérents · ${S.nAdh}`,back:'pilotage'}), `
+    <div class="alert">${I.lock}<div>Liste confidentielle, visible uniquement par le DS et le RS de ${ENT}.</div></div>
+    <div class="search">${I.search}<input class="inp" id="q" placeholder="Rechercher un adhérent" value="${esc(S.q)}" aria-label="Rechercher un adhérent"></div>
+    <div class="chips">${[['all','Tous'],['E','Employés'],['T','TAM'],['C','Cadres']].map(([k,l])=>`<button class="chip o" data-act="filt" data-k="${k}" aria-pressed="${S.f===k}">${l}</button>`).join('')}</div>
+    <div class="card flush">${list.length?list.map(m=>`<div class="mrow ${m.r?'restricted':''}"><button class="who" data-act="fiche" data-id="${m.id}"><b>${m.n.toUpperCase()} ${m.p} ›</b> <span class="tag">${SHORT[m.c]}</span>
+      <div>${m.tel} · ${m.p.toLowerCase()}.${m.n.toLowerCase()}@exemple.fr</div>${m.r?'<div class="r">Accès restreint</div>':''}</button>
+      <button class="btn ${m.r?'dark':'ghost'} sm" data-act="restrict" data-id="${m.id}">${m.r?'Rétablir':'Restreindre'}</button></div>`).join(''):'<p class="muted" style="padding:12px;margin:0">Aucun adhérent ne correspond à cette recherche.</p>'}</div>
+    <p class="tiny">Extrait de 7 adhérents sur ${S.nAdh}. Données fictives.</p>`, tabs('pil','adherents'));
+}},
+fiche:{n:15,g:'pil',l:'Fiche adhérent',r(){
+  const m = S.members.find(x=>x.id===S.fiche) || S.members[1];
+  return page(head({v:'ink',eb:'Fiche adhérent · confidentielle',t:`${m.n.toUpperCase()} ${m.p}`,back:'adherents'}), `
+    <div class="card flush">
+      <div class="list-row"><span>Collège</span><b>${COLLEGES[m.c]}</b></div>
+      <div class="list-row"><span>Téléphone</span><b style="color:var(--o-dk)">${m.tel}</b></div>
+      <div class="list-row"><span>E-mail</span><b style="color:var(--o-dk);overflow-wrap:anywhere">${m.p.toLowerCase()}.${m.n.toLowerCase()}@exemple.fr</b></div></div>
+    <div class="card" style="display:flex;flex-direction:column;gap:10px">
+      <div style="display:flex;justify-content:space-between;align-items:center"><b>Accès à l’application</b><span class="pill ${m.r?'bad':''}">${m.r?'Restreint':'Actif'}</span></div>
+      ${S.confirm?`<div class="alert"><div>${m.r?`Rétablir l’accès de ${m.p} ${m.n} ?`:`Restreindre l’accès de ${m.p} ${m.n} ? Elle ou il passera automatiquement en mode sympathisant.`}</div></div>
+        <div class="two"><button class="btn ghost" data-act="cancel">Annuler</button><button class="btn dark" data-act="restrict" data-id="${m.id}">Confirmer</button></div>`
+       :`<button class="btn dark" data-act="ask">${m.r?'Rétablir l’accès':'Restreindre l’accès'}</button>`}
+      <span class="tiny">À utiliser après un signalement du trésorier (hors application). L’adhérent restreint est invité à régulariser auprès de lui.</span></div>`, tabs('pil','adherents'));
+}},
+sympathisants:{n:16,g:'pil',l:'Sympathisants',r(){
+  const q=S.sq.trim().toLowerCase();
+  const list=S.syms.filter(m=>(S.sf==='all'||m.c===S.sf)&&(!q||(m.p+' '+m.n).toLowerCase().includes(q)));
+  return page(head({v:'ink',eb:'Espace pilotage DS / RS',t:`Sympathisants · ${S.syms.length+33}`,back:'pilotage'}), `
+    <div class="alert">${I.lock}<div>Inscrits via l’application, avec leur accord. Visible uniquement par le DS et le RS.</div></div>
+    <div class="search">${I.search}<input class="inp" id="sq" placeholder="Rechercher un sympathisant" value="${esc(S.sq)}" aria-label="Rechercher un sympathisant"></div>
+    <div class="chips">${[['all','Tous'],['E','Employés'],['T','TAM'],['C','Cadres']].map(([k,l])=>`<button class="chip o" data-act="sfilt" data-k="${k}" aria-pressed="${S.sf===k}">${l}</button>`).join('')}</div>
+    <div class="card flush">${list.map(m=>`<div class="person"><div class="who"><b>${m.n.toUpperCase()} ${m.p}</b> <span class="tag">${SHORT[m.c]}</span><br><span>${m.tel} · inscrit ${m.w}</span></div>
+      <button class="icon-btn" data-act="call" data-n="${m.p} ${m.n}" data-tel="${m.tel}" aria-label="Appeler">${I.phone}</button><button class="icon-btn" data-act="sms" data-n="${m.p} ${m.n}" data-tel="${m.tel}" aria-label="SMS">${I.sms}</button></div>`).join('')||'<p class="muted" style="padding:12px;margin:0">Aucun résultat.</p>'}</div>
+    <p class="tiny">Un appel ou un SMS pour les inviter à une réunion ou à adhérer. Données fictives.</p>`, tabs('pil','pilotage'));
+}},
+publier:{n:17,g:'pil',l:'Publier',r(){
+  const T={story:['Story','Vidéo courte · adhérents'],info:['L’info du jour','Bandeau · adhérents'],actu:['Actualité','Public au choix'],sondage:['Sondage','Public au choix · anonyme'],reunion:['Réunion','Agenda · adhérents']};
+  const audOK = S.pub==='actu'||S.pub==='sondage';
+  const form = {
+    story:`<button class="btn ghost">${I.dl.replace('M12 3v12m0 0-5-5m5 5 5-5','M12 15V3m0 0-5 5m5-5 5 5')}Choisir une vidéo (30 s max)</button><div class="field"><label for="pt">Titre</label><input class="inp" id="pt" value="Ce qu’il faut retenir du CSE"></div>`,
+    info:`<div class="field"><label for="pt">Texte du bandeau</label><input class="inp" id="pt" value="Permanence syndicale vendredi de 12 h à 14 h"></div>`,
+    actu:`<div class="field"><label for="pr">Rubrique</label><select class="inp" id="pr"><option>CSE</option><option>NAO</option><option>Actualités du syndicat</option><option>Actualité Cfdt ${ENT}</option><option>Information dialogue social</option></select></div><div class="field"><label for="pt">Titre</label><input class="inp" id="pt" value="Accord télétravail : où en est-on ?"></div>`,
+    sondage:`<div class="field"><label for="pt">Question</label><input class="inp" id="pt" value="Êtes-vous favorable à 2 jours de télétravail par semaine ?"></div><div class="two"><input class="inp" aria-label="Choix 1" value="Oui"><input class="inp" aria-label="Choix 2" value="Non"></div>`,
+    reunion:`<div class="field"><label for="pt">Intitulé</label><input class="inp" id="pt" value="Réunion de bilan des NAO"></div><div class="two"><input class="inp" aria-label="Date" value="10 déc. · 17 h"><input class="inp" aria-label="Lieu" value="Salle syndicale"></div>`
+  }[S.pub];
+  return page(head({v:'ink',eb:'Espace pilotage DS / RS · '+ENT,t:'Publier',back:'pilotage'}), `
+    <span class="muted">Story, info du jour et réunions : adhérents uniquement. Pour une actualité ou un sondage, choisissez le public.</span>
+    <div class="tiles">${Object.entries(T).map(([k,[t,s]],i)=>`<button class="tile ${k==='story'?'wide':''}" data-act="pub" data-k="${k}" aria-pressed="${S.pub===k}"><b>${t}</b><span>${s}</span></button>`).join('')}</div>
+    <div class="card" style="display:flex;flex-direction:column;gap:10px">${form}
+      ${audOK?`<b style="font-size:.86em">Pour qui ?</b><div class="chips">${[['adh','Adhérents'],['sym','Sympathisants'],['deux','Les deux']].map(([k,l])=>`<button class="chip o" data-act="aud" data-k="${k}" aria-pressed="${S.aud===k}">${l}</button>`).join('')}</div>`:''}
+      ${S.pub==='sondage'?`<div class="alert ok">${I.lock}<div>Vote anonyme : aucune réponse n’est rattachée à un nom. Résultats en % ${S.aud==='deux'?'des adhérents et des sympathisants, séparément':S.aud==='adh'?'des adhérents':'des sympathisants'}.</div></div>`:''}
+      <button class="btn" data-act="publish">Publier</button></div>
+    <div class="card"><b>Dernières publications</b><div class="res">${S.pubs.map(p=>`<div><div class="l"><span><b>${p.k}</b> · ${esc(p.t)}</span><b>${p.v} %</b></div><div class="bar"><i style="width:${p.v}%"></i></div></div>`).join('')}</div>
+      <p class="tiny" style="margin:8px 0 0">Part du public visé qui a lu ou vu la publication · chiffres fictifs</p></div>`, tabs('pil','publier'));
+}},
+traiter:{n:18,g:'pil',l:'À traiter',r(){
+  return page(head({v:'ink',eb:'Espace pilotage DS / RS · '+ENT,t:'À traiter',back:'pilotage'}), `
+    <div class="lbl">Demandes d’accès à valider · ${S.pending.length}</div>
+    <span class="muted" style="margin-top:-6px">Les questions et propositions arrivent par e-mail sur l’adresse de la section.</span>
+    ${S.pending.length?`<div class="card flush">${S.pending.map((p,i)=>`<div class="person"><div class="who"><b>${p.p} ${p.n}</b><span>NPA ${p.npa} · adhésion à vérifier</span></div><button class="btn sm" data-act="validate" data-i="${i}">Valider</button></div>`).join('')}</div>`
+      :`<div class="alert ok">${I.check}<div>Toutes les demandes sont traitées.</div></div>`}`, tabs('pil','traiter'));
+}},
+
+annuaire:{n:'18 bis',g:'pil',l:'Annuaire (gestion par le RS)',r(){ return mandatsView('pil'); }},
+/* ---------------- Parcours sympathisant ---------------- */
+'sym-ident':{n:19,g:'sym',l:'Identification',r(){
+  return page(head({eb:'Espace sympathisant',t:'Je m’identifie',back:'connexion'}), `
+    <form id="symform" style="display:flex;flex-direction:column;gap:10px" novalidate>
+    <div class="two"><div class="field"><label for="sn">Nom</label><input class="inp" id="sn" value="Ferri"></div><div class="field"><label for="sp">Prénom</label><input class="inp" id="sp" value="Marc"></div></div>
+    <div class="field"><label for="se">Entreprise</label><select class="inp" id="se">${entOpts()}</select></div>
+    <div class="field"><label for="sc">Collège</label><select class="inp" id="sc">${Object.values(COLLEGES).map(v=>`<option>${v}</option>`).join('')}</select></div>
+    <div class="field"><label for="st">Téléphone</label><input class="inp" id="st" value="06 00 00 00 21" inputmode="tel"></div>
+    <div class="field"><label for="sm">Adresse e-mail</label><input class="inp" id="sm" value="marc.ferri@exemple.fr" inputmode="email"></div>
+    <label class="check"><input type="checkbox" id="consent" ${S.consent?'checked':''}> J’accepte que le SECAM utilise ces informations pour me contacter. Je peux retirer mon accord à tout moment.</label>
+    <button class="btn" type="submit" ${S.consent?'':'disabled'}>Accéder à l’espace sympathisant</button></form>
+    <p class="tiny" style="text-align:center">Vos données sont protégées et ne sont jamais transmises à l’employeur.</p>`);
+}},
+'sym-code':{n:'19 bis',g:'sym',l:'Code SMS',r(){ return codeScreen('sym'); }},
+'sym-delegues':{n:20,g:'sym',l:'Délégués',r(){
+  return page(head({eb:symEb(),t:'Vos délégués et élus',p:'Joignez-les directement par appel ou SMS.'}), (me().r?restrictedCard():'')+people(delegs(ENT))+joinCard(), tabs('sym','sym-delegues'));
+}},
+'sym-sondages':{n:21,g:'sym',l:'Sondages',r(){
+  return page(head({eb:symEb(),t:'Sondages',p:'Donnez votre avis sur les sujets que porte la section.'}), `${restrictedNote()}
+    <div class="alert ok">${I.lock}<div><b>Vote anonyme.</b> Votre réponse n’est jamais rattachée à votre nom, y compris pour les délégués.</div></div>
+    ${pollCard('sym')}
+    <div class="card"><span class="lbl" style="color:var(--sub)">Terminé · 16 oct.</span><br><b style="font-size:.9em">Une navette entre la gare et le site ?</b><div class="tiny" style="margin-top:4px">Résultats publiés dans l\u2019onglet Actu.</div></div>`, tabs('sym','sym-sondages'));
+}},
+'sym-actu':{n:22,g:'sym',l:'Actu',r(){
+  return page(head({eb:symEb(),t:'Actu',p:'Les informations que la section partage avec les sympathisants.'}), `${restrictedNote()}
+    <div class="card"><div class="lbl">NAO · 2 nov.</div><b style="font-size:.92em">Ce que la CFDT demande cette année</b><p class="muted" style="margin:4px 0 0">Augmentation générale, prime de transport, égalité salariale femmes-hommes.</p></div>
+    ${NAVETTE}
+    <div class="card"><div class="lbl">Information dialogue social · 30 oct.</div><b style="font-size:.92em">Accord télétravail : deuxième réunion de négociation</b><p class="muted" style="margin:4px 0 0">La direction propose 1 jour par semaine. Nous demandons 2 jours et une indemnité.</p></div>
+    <p class="tiny" style="margin:0">Les stories, l’agenda et l’info du jour sont réservés aux adhérents.</p>${joinCard()}`, tabs('sym','sym-actu'));
+}},
+/* ---------------- Administration SECAM ---------------- */
+admin:{n:23,g:'adm',l:'Entreprises',r(){
+  const A=S.adm;
+  const list = ENTDATA.filter(e=>!e.arch);
+  return page(head({v:'ink',eb:'Administration SECAM',t:'Entreprises',p:'Chaque entreprise a 2 gestionnaires qui tiennent l\u2019annuaire. Les administrateurs du SECAM peuvent reprendre la main.'}).replace('<p>','<p style="color:#C9D2E6">'), `
+    <div class="alert">${I.shield}<div>Connecté : <b>${SG}</b>, secrétaire général du SECAM (administrateur de droit).</div></div>
+    ${list.map(e=>{ const ds=e.m.find(x=>x.role==='DS'), rs=e.m.find(x=>x.role==='RS'), el=e.m.filter(x=>x.role==='CT'||x.role==='CS').length, alert=e.m.some(x=>soon(x.fin));
+      return `<button class="card" data-act="admEnt" data-k="${esc(e.name)}" style="text-align:left;display:flex;flex-direction:column;gap:4px;color:var(--tx)">
+        <span style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b style="font-size:1em">${esc(e.name)}</b>${e.tut?'<span class="pill bad">Repris par le SECAM</span>':govCount(e)<2?`<span class="pill bad">Gouvernance ${govCount(e)}/2</span>`:alert?'<span class="pill bad">Mandats à renouveler</span>':'<span class="pill">À jour</span>'}</span>
+        <span class="tiny">Gestionnaires : ${gP(e)?esc(gP(e).n):'<b style="color:var(--bad)">principal à désigner</b>'} · ${gS(e)?esc(gS(e).n):'<b style="color:var(--bad)">suppléant à désigner</b>'}<br>${e.m.filter(x=>x.role==='DS').length} DS · ${el} élu${el>1?'s':''} CSE · ${e.adh} adhérents</span></button>`; }).join('')}
+    ${A.addEnt?`<form id="entform" class="card" style="display:flex;flex-direction:column;gap:8px" novalidate>
+        <b>Nouvelle entreprise</b>
+        <div class="field"><label for="en">Nom de l’entreprise</label><input class="inp" id="en" placeholder="Nom de l\u2019entreprise"></div>
+        <div class="field"><label for="em">E-mail de la section</label><input class="inp" id="em" placeholder="section.nom@secam-exemple.fr"></div>
+        <div class="two"><button type="button" class="btn ghost" data-act="admCancel">Annuler</button><button class="btn" type="submit">Ajouter</button></div></form>`
+      :`<button class="btn ghost" data-act="admAddEnt">+ Ajouter une entreprise</button>`}
+    <p class="tiny" style="margin:0">Réservé aux administrateurs du SECAM. Noms et numéros fictifs.</p>`, tabs('adm','admin'));
+}},
+'admin-ent':{n:24,g:'adm',l:'Fiche entreprise',r(){ return mandatsView('adm'); }},
+'admin-journal':{n:25,g:'adm',l:'Journal des modifications',r(){
+  return page(head({v:'ink',eb:'Administration SECAM',t:'Journal des modifications',p:'Chaque changement est tracé : qui, quoi, quand.'}).replace('<p>','<p style="color:#C9D2E6">'), `
+    <div class="card flush">${S.log.map(l=>`<div class="person" style="align-items:flex-start"><div class="date" style="width:3.4em;padding:4px"><b style="font-size:.85em">${l.d}</b></div><div class="who"><b style="font-weight:600">${esc(l.what)}</b><span>${esc(l.who)}</span></div></div>`).join('')}</div>
+    <p class="tiny" style="margin:0">Le journal ne peut pas être modifié. Il sert à rendre compte au conseil syndical.</p>`, tabs('adm','admin-journal'));
+}},
+'admin-admins':{n:26,g:'adm',l:'Administrateurs SECAM',r(){
+  return page(head({v:'ink',eb:'Administration SECAM',t:'Administrateurs',p:'Ils peuvent reprendre la main sur la gouvernance de n’importe quelle entreprise.'}).replace('<p>','<p style="color:#C9D2E6">'), `
+    <div class="lbl">Administrateur de droit</div>
+    <div class="card flush"><div class="person"><div class="av">SG</div><div class="who"><b>${SG}</b><span>Secrétaire général du SECAM</span></div><span class="pill">De droit</span></div></div>
+    <div class="lbl">Désignés par le conseil syndical</div>
+    <div class="card flush">${S.admins.length?S.admins.map((a,i)=>`<div class="person"><div class="av">${ini(a.n)}</div><div class="who"><b>${esc(a.n)}</b><span>Membre du conseil syndical · désigné par le conseil du ${esc(a.d)}</span></div><button class="btn sm ghost" data-act="admRmAdmin" data-i="${i}" style="color:var(--bad)">Retirer</button></div>`).join(''):'<p class="muted" style="padding:12px;margin:0">Aucun membre désigné pour l’instant.</p>'}</div>
+    ${S.adm.addAdmin?`<form id="adminform" class="card" style="display:flex;flex-direction:column;gap:8px" novalidate>
+        <b>Enregistrer une désignation</b>
+        <div class="field"><label for="an">Membre du conseil syndical</label><input class="inp" id="an" placeholder="Prénom et nom"></div>
+        <div class="field"><label for="ad">Date de la décision du conseil</label><input class="inp" id="ad" type="date" value="2026-11-08"></div>
+        <div class="two"><button type="button" class="btn ghost" data-act="admCancel">Annuler</button><button class="btn" type="submit">Enregistrer</button></div></form>`
+      :`<button class="btn ghost" data-act="admAddAdmin">+ Enregistrer une désignation du conseil</button>`}
+    <div class="alert">${I.info}<div>Le secrétaire général est administrateur de droit. Les autres administrateurs sont désignés par une décision du conseil syndical, enregistrée ici et inscrite au journal.</div></div>`, tabs('adm','admin-admins'));
+}}
+};
+
+const GROUPS = [['adh','Parcours adhérent'],['pil','Espace pilotage DS / RS'],['sym','Parcours sympathisant'],['adm','Administration SECAM']];
+const phone = document.getElementById('phone');
+let toastTimer;
+
+function sheetHTML(){
+  const s = S.sheet; if(!s) return '';
+  let inner;
+  if(s.kind==='mail') inner = `<h4>Votre messagerie s’ouvrirait avec cet e-mail</h4><div class="mail"><div><span>À</span>${s.to}</div><div><span>Objet</span>${esc(s.subject)}</div><div>${esc(s.body)}</div></div>`;
+  else if(s.kind==='call') inner = `<h4>L’application Téléphone s’ouvrirait</h4><div class="mail"><div><span>Appel</span>${esc(s.n)}</div><div><span>Numéro</span>${s.tel}</div></div>`;
+  else if(s.kind==='sms') inner = `<h4>L’application Messages s’ouvrirait</h4><div class="mail"><div><span>À</span>${esc(s.n)} · ${s.tel}</div><div>Bonjour, …</div></div>`;
+  else inner = `<h4>Bulletin d’adhésion</h4><p class="muted" style="margin:0">Dans l’application, ce bouton télécharge le bulletin PDF fourni par le SECAM. Il se remplit et se renvoie à la section.</p>`;
+  return `<div class="overlay" data-act="close"><div class="sheet" role="dialog" aria-modal="true"><div class="grab"></div>${inner}
+    <p class="tiny" style="margin:0">Prototype : rien n’est envoyé.</p><button class="btn dark" data-act="close">Fermer</button></div></div>`;
+}
+
+function render(keepScroll){
+  const scr = SCREENS[S.screen];
+  const body = document.getElementById('body'); const st = keepScroll && body ? body.scrollTop : 0;
+  const active = document.activeElement && document.activeElement.id;
+  phone.className = 'phone' + (S.dark?' dark':'') + (S.large?' large':'');
+  phone.innerHTML = scr.r() + sheetHTML() + (S.toast?`<div class="toast" role="status"><span>${S.toast.t}</span>${S.toast.undo?`<button data-act="undo">Annuler</button>`:''}</div>`:'');
+  const nb = document.getElementById('body'); if(nb) nb.scrollTop = st;
+  if(active && (active==='q'||active==='sq'||active==='code')){ const el=document.getElementById(active); if(el){el.focus(); el.setSelectionRange(el.value.length, el.value.length);} }
+  document.querySelectorAll('#groups button').forEach(b => b.setAttribute('aria-current', String(b.dataset.s===S.screen || (b.dataset.s==='sombre'&&S.screen==='compte'&&S.dark))));
+  document.getElementById('pick').value = S.screen==='compte'&&S.dark ? 'sombre' : S.screen;
+}
+
+function go(id, fromHash){
+  let t = SCREENS[id]; if(!t) return;
+  if(t.pre) t.pre();
+  if(t.alias){ id = t.alias; t = SCREENS[id]; }
+  if(t.adh && me().r) id = 'sym-delegues';
+  if(id==='annuaire') Object.assign(S.adm,{ent:ENT,edit:null,add:false,del:null,arch:false});
+  S.screen = id; S.sheet = null; S.confirm = false;
+  if(id!=='story') S.playing = false;
+  try{ if(location.hash.slice(1)!==id) history.replaceState(null,'','#'+id); }catch(e){}
+  render(false);
+}
+function logIt(what){ const d=new Date(); S.log.unshift({d:String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0'), who: S.screen==='annuaire' ? (()=>{ const r=gP(ent(ENT)); return r?`${r.n} (gestionnaire principal)`:'Gestionnaire suppléant'; })() : `${SG} (secrétaire général)`, what}); }
+function toast(t, undo){
+  S.toast = {t, undo}; render(true);
+  clearTimeout(toastTimer); toastTimer = setTimeout(()=>{ S.toast=null; render(true); }, 3200);
+}
+
+const ACT = {
+  mail(el){ const to = el.dataset.to==='treso'?TRESO:ent(ENT).mail; const sub = el.dataset.s||'Question';
+    S.sheet = {kind:'mail', to, subject:sub, body:`Bonjour,\n\n…\n\n${ME.prenom} ${ME.nom} · NPA ${ME.npa}\n${ENT}`}; render(true); },
+  call(el){ S.sheet={kind:'call',n:el.dataset.n,tel:el.dataset.tel}; render(true); },
+  sms(el){ S.sheet={kind:'sms',n:el.dataset.n,tel:el.dataset.tel}; render(true); },
+  bulletin(){ S.sheet={kind:'pdf'}; render(true); },
+  close(el, e){ if(e.target!==el) return; S.sheet=null; render(true); },
+  subj(el){ S.subjects[el.dataset.k]=!S.subjects[el.dataset.k]; render(true); },
+  unlock(el){ S.unlock=el.dataset.k; render(true); },
+  play(){ S.playing=!S.playing; render(true); },
+  like(){ S.liked=!S.liked; render(true); },
+  dark(){ S.dark=!S.dark; render(true); },
+  size(){ S.large=!S.large; render(true); },
+  rub(el){ const k=el.dataset.k; S.rub[k]=!S.rub[k]; render(true); },
+  resend(){ S.code=''; S.codeErr=false; toast('Un nouveau code a été envoyé par SMS.'); },
+  'restore-me'(){ me().r=false; go('accueil'); },
+  filt(el){ S.f=el.dataset.k; render(true); },
+  sfilt(el){ S.sf=el.dataset.k; render(true); },
+  fiche(el){ S.fiche=+el.dataset.id; go('fiche'); },
+  ask(){ S.confirm=true; render(true); },
+  cancel(){ S.confirm=false; render(true); },
+  restrict(el){ const m=S.members.find(x=>x.id===+el.dataset.id); m.r=!m.r; S.confirm=false;
+    S.lastRestrict=m.id; toast(`Accès de ${m.p} ${m.n} ${m.r?'restreint':'rétabli'}.`, true); },
+  undo(){ const m=S.members.find(x=>x.id===S.lastRestrict); if(m) m.r=!m.r; S.toast=null; clearTimeout(toastTimer); render(true); },
+  admEnt(el){ Object.assign(S.adm,{ent:el.dataset.k,edit:null,add:false,del:null,arch:false}); go('admin-ent'); },
+  admAddEnt(){ S.adm.addEnt=true; render(true); },
+  admCancel(){ Object.assign(S.adm,{edit:null,add:false,addEnt:false,addAdmin:false,del:null,arch:false}); render(true); },
+  admAdd(){ Object.assign(S.adm,{add:true,edit:null,del:null}); render(true); },
+  admEdit(el){ Object.assign(S.adm,{edit:+el.dataset.i,add:false,del:null}); render(true); },
+  admAskDel(el){ const x=ent(S.adm.ent).m[+el.dataset.i]; if(S.screen==='annuaire' && x.gest){ toast('Désignez d\u2019abord un autre gestionnaire suppléant : il faut toujours 2 gestionnaires.'); return; } S.adm.del=+el.dataset.i; render(true); },
+  admDel(el){ const e=ent(S.adm.ent), x=e.m.splice(+el.dataset.i,1)[0]; S.adm.del=null; logIt(`${e.name} : ${x.n} retiré (${ROLES[x.role].r})`); toast(`${x.n} retiré de l\u2019annuaire de ${e.name}.`); },
+  admGest(el){ const e=ent(S.adm.ent), g=el.dataset.g, x=e.m[+el.dataset.i]; e.m.forEach(y=>{ if(y.gest===g) delete y.gest; }); x.gest=g; logIt(`${e.name} : ${x.n} désigné gestionnaire ${g==='P'?'principal':'suppléant'}`); toast(`${x.n} est maintenant gestionnaire ${g==='P'?'principal':'suppléant'}.`); },
+  admTut(){ const e=ent(S.adm.ent); if(e.tut){ e.tut=null; logIt(`${e.name} : la main est rendue aux gestionnaires`); toast('La main est rendue aux gestionnaires de l’entreprise.'); } else { const d=new Date(); e.tut={who:`${SG}, secrétaire général`, d:d.toLocaleDateString('fr-FR')}; logIt(`${e.name} : le SECAM reprend la main sur la gouvernance`); toast(`Vous avez repris la main sur ${e.name}.`); } },
+  admAddAdmin(){ S.adm.addAdmin=true; render(true); },
+  admRmAdmin(el){ const a=S.admins.splice(+el.dataset.i,1)[0]; logIt(`Désignation de ${a.n} comme administrateur retirée`); toast(`${a.n} n’est plus administrateur.`); },
+  admAskArch(){ S.adm.arch=true; render(true); },
+  admArch(){ const e=ent(S.adm.ent); e.arch=true; S.adm.arch=false; logIt(`${e.name} : entreprise archivée`); go('admin'); },
+  validate(el){ const p=S.pending.splice(+el.dataset.i,1)[0]; S.nAdh++; toast(`Accès de ${p.p} ${p.n} validé. Une notification lui est envoyée.`); },
+  pub(el){ S.pub=el.dataset.k; render(true); },
+  aud(el){ S.aud=el.dataset.k; render(true); },
+  publish(){ const K={story:'Story',info:'Info du jour',actu:'Actualité',sondage:'Sondage',reunion:'Réunion'}; const t=(document.getElementById('pt')||{}).value||'';
+    S.pubs.unshift({k:K[S.pub],t:t.slice(0,38),v:0}); S.pubs=S.pubs.slice(0,4); toast('Publié. Les abonnés à la rubrique sont notifiés.'); },
+  vote(el){ if(el.dataset.w==='adh') S.adhVote=+el.dataset.i; else S.symVote=+el.dataset.i; render(true); },
+  votesubmit(el){ if(el.dataset.w==='adh'){ if(S.adhVote===null) return; S.adhVoted=true; } else { if(S.symVote===null) return; S.symVoted=true; } render(true); }
+};
+
+phone.addEventListener('click', e => {
+  const g = e.target.closest('[data-go]'); if(g && phone.contains(g)){ if(!g.disabled) go(g.dataset.go); return; }
+  const a = e.target.closest('[data-act]'); if(a && ACT[a.dataset.act] && !a.disabled){ ACT[a.dataset.act](a, e); }
+});
+phone.addEventListener('submit', e => { e.preventDefault();
+  if(e.target.id==='login'){ S.code=''; S.codeErr=false; go('code-sms'); }
+  if(e.target.id==='codeform'){ if(S.code.replace(/\D/g,'')==='482917'){ S.codeErr=false; go(e.target.dataset.w==='adh'?'premiere':'sym-delegues'); } else { S.codeErr=true; render(true); } }
+  if(e.target.id==='mform'){ const v=id=>document.getElementById(id).value.trim(); const e2=ent(S.adm.ent);
+    const x={role:v('mr'),n:v('mn'),tel:v('mt'),fin:v('mf')||'2030-06'};
+    if(!x.n){ toast('Indiquez le prénom et le nom.'); return; }
+    if(S.adm.edit!==null){ if(e2.m[S.adm.edit].gest && (x.role==='DS'||x.role==='RS')) x.gest=e2.m[S.adm.edit].gest; e2.m[S.adm.edit]=x; logIt(`${e2.name} : mandat de ${x.n} modifié (${ROLES[x.role].r}, fin ${finTxt(x.fin)})`); toast('Mandat modifié. L\u2019annuaire est à jour.'); }
+    else { e2.m.push(x); logIt(`${e2.name} : ${x.n} ajouté (${ROLES[x.role].r})`); toast(`${x.n} ajouté à l\u2019annuaire de ${e2.name}.`); }
+    S.adm.edit=null; S.adm.add=false; render(true); }
+  if(e.target.id==='adminform'){ const n=document.getElementById('an').value.trim(), d=document.getElementById('ad').value;
+    if(!n){ toast('Indiquez le nom du membre du conseil.'); return; }
+    const dt = d ? new Date(d+'T12:00').toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'}) : '';
+    S.admins.push({n, d:dt}); S.adm.addAdmin=false; logIt(`${n} désigné administrateur par le conseil syndical du ${dt}`); toast(`${n} est maintenant administrateur.`); }
+  if(e.target.id==='entform'){ const n=document.getElementById('en').value.trim(), m=document.getElementById('em').value.trim();
+    if(!n){ toast('Indiquez le nom de l\u2019entreprise.'); return; }
+    ENTDATA.push({name:n, mail:m||('section@secam-exemple.fr'), adh:0, m:[]}); logIt(`${n} : entreprise ajoutée`); S.adm.addEnt=false; S.adm.ent=n; go('admin-ent'); }
+  if(e.target.id==='symform' && S.consent){ S.code=''; S.codeErr=false; go('sym-code'); }
+});
+phone.addEventListener('input', e => {
+  if(e.target.id==='q'){ S.q=e.target.value; render(true); }
+  if(e.target.id==='sq'){ S.sq=e.target.value; render(true); }
+  if(e.target.id==='code'){ S.code=e.target.value.replace(/\D/g,'').slice(0,6); S.codeErr=false; render(true); }
+});
+phone.addEventListener('change', e => {
+  if(e.target.id==='col'){ S.college=e.target.value; toast('Collège enregistré.'); }
+  if(e.target.id==='consent'){ S.consent=e.target.checked; render(true); }
+});
+
+// Guide index + mobile picker
+const groupsEl = document.getElementById('groups'), pick = document.getElementById('pick');
+GROUPS.forEach(([g,label]) => {
+  const items = Object.entries(SCREENS).filter(([,s])=>s.g===g);
+  groupsEl.insertAdjacentHTML('beforeend', `<div class="grp"><h2>${label}</h2><ol>${items.map(([id,s])=>`<li><button data-s="${id}"><span class="n">${s.n}</span>${s.l}</button></li>`).join('')}</ol></div>`);
+  pick.insertAdjacentHTML('beforeend', `<optgroup label="${label}">${items.map(([id,s])=>`<option value="${id}">${s.n}. ${s.l}</option>`).join('')}</optgroup>`);
+});
+groupsEl.addEventListener('click', e => { const b=e.target.closest('button[data-s]'); if(!b) return; if(b.dataset.s==='compte') S.dark=false; go(b.dataset.s, true); });
+pick.addEventListener('change', () => { if(pick.value==='compte') S.dark=false; go(pick.value, true); });
+
+function fromHash(){ const h = location.hash.slice(1); if(h && SCREENS[h] && h!==S.screen) go(h, true); }
+window.addEventListener('hashchange', fromHash);
+const h0 = location.hash.slice(1); if(h0 && SCREENS[h0]) go(h0, true); else render(false);
+})();
+</script>
+
+<script>
+(function(){
+  var CODE = "NAO2026", KEY = 'secam-demo-ok';
+  var gate = document.getElementById('gate'), form = document.getElementById('gateForm'),
+      input = document.getElementById('gateCode'), err = document.getElementById('gateErr');
+  function ok(){ try { return localStorage.getItem(KEY) === CODE; } catch(e){ return false; } }
+  if(ok()) gate.hidden = true; else setTimeout(function(){ input.focus(); }, 50);
+  form.addEventListener('submit', function(e){
+    e.preventDefault();
+    if(input.value.trim().toUpperCase() === CODE){
+      try { localStorage.setItem(KEY, CODE); } catch(e){}
+      gate.hidden = true;
+    } else { err.textContent = 'Code incorrect.'; input.select(); }
+  });
+  var btn = document.getElementById('demoBtn'), pick = document.getElementById('pick');
+  function setOpen(v){ document.body.classList.toggle('demo-open', v); btn.setAttribute('aria-expanded', String(v)); btn.textContent = v ? 'Fermer ✕' : 'Démo ▾'; }
+  btn.addEventListener('click', function(){ setOpen(!document.body.classList.contains('demo-open')); });
+  pick.addEventListener('change', function(){ setOpen(false); });
+  if('serviceWorker' in navigator){ window.addEventListener('load', function(){ navigator.serviceWorker.register('sw.js').catch(function(){}); }); }
+})();
+</script>
+</body>
+</html>
