@@ -4,8 +4,13 @@ self.addEventListener('activate', (e) => e.waitUntil(self.clients.claim()));
 self.addEventListener('push', (e) => {
   let d = {};
   try { d = e.data ? e.data.json() : {}; } catch (_) { d = { corps: e.data ? e.data.text() : '' }; }
-  e.waitUntil(self.registration.showNotification(d.titre || 'SECAM Connect', {
-    body: d.corps || '', icon: BASE + '/icon-192.png', badge: BASE + '/icon-192.png', lang: 'fr',
+  // Notifications discrètes : rien sur l'écran verrouillé ne révèle l'appartenance syndicale ni le sujet ;
+  // le détail se lit dans l'application. Les alertes du pilotage restent génériques elles aussi.
+  const pilotage = String(d.url || '').startsWith('/pilotage');
+  e.waitUntil(self.registration.showNotification('SECAM Connect', {
+    body: pilotage ? 'Une action vous attend dans l’application.' : 'Vous avez une nouveauté dans l’application.',
+    tag: pilotage ? 'secam-pilotage' : 'secam-nouveaute', renotify: true,
+    icon: BASE + '/icon-192.png', badge: BASE + '/icon-192.png', lang: 'fr',
     data: { url: BASE + (d.url || '/') },
   }));
 });
